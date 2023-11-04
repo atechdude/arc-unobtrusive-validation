@@ -5141,7 +5141,6 @@ let FormManager = class FormManager {
     _formsCollection;
     _validationService;
     _logger;
-    interactionStateMap = new Map();
     eventListenersMap = new WeakMap();
     dirtyMap = {};
     debouncers = {};
@@ -5151,8 +5150,8 @@ let FormManager = class FormManager {
         this._formsCollection = _formsCollection;
         this._validationService = _validationService;
         this._logger = _logger;
-        // It should be initialized in the constructor or similar part of your class
-        this.eventListenersMap = new Map();
+        // Create a new Map for the event listeners
+        this.eventListenersMap = new WeakMap();
     }
     async init() {
         const forms = this.createForms();
@@ -5161,6 +5160,103 @@ let FormManager = class FormManager {
         }
         // Ensure setupForms is awaited so that it completes before init resolves
         await this.setupForms(forms);
+    }
+    // Sets up all of the forms, add them to the collection, and sets up listeners
+    async setupForms(forms) {
+        if (!forms) {
+            this._logger.getLogger().error(new Error("No forms provided to setupForms."));
+            return;
+        }
+        for (const form of forms) {
+            try {
+                // Remove any existing listeners for the form. ("This only applies to forms loaded dynamically since a page reload nerfs all state")
+                await this.removeListeners(form.formElement);
+                this.cleanupResourcesForForm(form.formElement);
+                // Setup Listeners
+                // Ensure this promise is awaited so that listeners are set up before proceeding
+                await this.configureListeners(form);
+                // Add the form to the observable collection
+                this._formsCollection.addItem(form);
+            }
+            catch (error) {
+                // Log any errors
+                this._logger.getLogger().error(error instanceof Error ? error : new Error("Error in setupForms: " + error));
+            }
+        }
+    }
+    async configureListeners(form) {
+        // Validate the control using the validation service
+        const validateControl = async (input) => {
+            await this._validationService.validateControl(input);
+        };
+        // Marks the control as dirty, which means it has been interacted with basically
+        const makeControlDirty = (input) => {
+            this.dirtyMap[input.name] = true;
+        };
+        const debouncedValidate = (input, debounceTime) => {
+            if (!this.debouncers[input.name]) {
+                this.debouncers[input.name] = this._debounceFactory.create(); // Create a new debouncer for the input
+            }
+            // Get the debouncer for the input
+            const debouncer = this.debouncers[input.name];
+            debouncer.debounce(async () => {
+                console.log(`Debouncing ${input.name}`);
+                await validateControl(input);
+            }, debounceTime);
+        };
+        // Debounced input event handler
+        const inputEventHandler = (event) => {
+            const control = event.target;
+            makeControlDirty(control);
+            debouncedValidate(control, 500); // Using 500ms for input debounce time
+        };
+        // Non-debounced focus event handler ("Useful for adding some CSS stuff. Other than pretty worthless")
+        const focusEventHandler = (event) => {
+            // For Future Use
+        };
+        // Blur event handler
+        const blurEventHandler = (event) => {
+            // Use a type assertion to convince TypeScript that 'event' is a FocusEvent.
+            const focusEvent = event;
+            const target = focusEvent.target;
+            const relatedTarget = focusEvent.relatedTarget;
+            // Check if the relatedTarget is focusable and warrants validation
+            if (relatedTarget && (relatedTarget.tagName === "INPUT" || relatedTarget.tagName === "SELECT" || relatedTarget.tagName === "TEXTAREA" || relatedTarget.isContentEditable)) {
+                // Perform actions for blurring towards a focusable element
+                makeControlDirty(target);
+                this._validationService.validateControl(target).catch(error => {
+                    this._logger.getLogger().error(error instanceof Error ? error : new Error("Error in blurEventHandler: " + error));
+                });
+            }
+            else {
+                // This blur is to a non-focusable element sont call validateControl
+                return;
+            }
+        };
+        // Keep track of event listeners to be able to remove them later
+        const listeners = {
+            input: inputEventHandler,
+            focus: focusEventHandler,
+            blur: blurEventHandler
+        };
+        // Set the listeners for the form so we can cleanup later. Usefull for dynamically loaded forms
+        this.eventListenersMap.set(form.formElement, listeners);
+        this.addListeners(form.formElement, listeners);
+    }
+    // Remove the listeners from the form
+    async removeListeners(formElement) {
+        const listeners = this.eventListenersMap.get(formElement);
+        if (listeners) {
+            for (const [eventType, listener] of Object.entries(listeners)) {
+                // Ensure the listener is a function before attempting to remove
+                if (typeof listener === "function") {
+                    // Correctly map the event type for focus and blur
+                    const domEventType = eventType === "focus" ? "focusin" : eventType === "blur" ? "focusout" : eventType;
+                    formElement.removeEventListener(domEventType, listener);
+                }
+            }
+            this.eventListenersMap.delete(formElement);
+        }
     }
     // Get all of the form elements
     createForms() {
@@ -5192,91 +5288,8 @@ let FormManager = class FormManager {
         }
         return formArray; // Return the formArray after processing all forms
     }
-    // Sets up all of the forms, add them to the collection, and sets up listeners
-    async setupForms(forms) {
-        if (!forms) {
-            this._logger.getLogger().error(new Error("No forms provided to setupForms."));
-            return;
-        }
-        for (const form of forms) {
-            try {
-                // Remove any existing listeners for the form. ("This only applies to forms loaded dynamically since a page reload nerfs all state")
-                await this.removeListeners(form.formElement);
-                // Setup Listeners
-                // Ensure this promise is awaited so that listeners are set up before proceeding
-                await this.setupListeners(form);
-                // Add the form to the observable collection
-                this._formsCollection.addItem(form);
-            }
-            catch (error) {
-                // Log any errors
-                this._logger.getLogger().error(error instanceof Error ? error : new Error("Error in setupForms: " + error));
-            }
-        }
-    }
-    async setupListeners(form) {
-        // Moved out the logic to separate functions for clarity.
-        const validateControl = async (input) => {
-            await this._validationService.validateControl(input);
-        };
-        const makeControlDirty = (input) => {
-            this.dirtyMap[input.name] = true;
-        };
-        const debouncedValidate = (input, debounceTime) => {
-            if (!this.debouncers[input.name]) {
-                this.debouncers[input.name] = this._debounceFactory.create(); // Create a new debouncer for the input
-                console.log(`Debouncer created for ${input.name}`);
-            }
-            // Assuming the debouncer returns a function that when called, debounces the call.
-            const debouncer = this.debouncers[input.name];
-            debouncer.debounce(async () => {
-                console.log(`Debouncing ${input.name}`);
-                await validateControl(input);
-            }, debounceTime);
-        };
-        // Debounced input event handler
-        const inputEventHandler = (event) => {
-            const control = event.target;
-            makeControlDirty(control);
-            debouncedValidate(control, 500); // Using 500ms for input debounce time
-        };
-        // Non-debounced focus event handler ("Useful for adding some CSS stuff. Other than pretty worthless")
-        const focusEventHandler = (event) => {
-            // const control = event.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
-            //makeControlDirty(control);
-            //debouncedValidate(control, 300); // Using 1000ms for focus debounce time
-        };
-        // Blur event handler
-        const blurEventHandler = (event) => {
-            console.log("blurEventHandler");
-            // Use a type assertion to convince TypeScript that 'event' is a FocusEvent.
-            const focusEvent = event;
-            const target = focusEvent.target;
-            const relatedTarget = focusEvent.relatedTarget;
-            // Check if the relatedTarget is focusable and warrants validation
-            if (relatedTarget && (relatedTarget.tagName === "INPUT" || relatedTarget.tagName === "SELECT" || relatedTarget.tagName === "TEXTAREA" || relatedTarget.isContentEditable)) {
-                // Perform actions for blurring towards a focusable element
-                console.log("blur", target);
-                makeControlDirty(target);
-                this._validationService.validateControl(target).catch(error => {
-                    this._logger.getLogger().error(error instanceof Error ? error : new Error("Error in blurEventHandler: " + error));
-                });
-            }
-            else {
-                // This blur is to a non-focusable element sont call validateControl
-                return;
-            }
-        };
-        // Keep track of event listeners to be able to remove them later
-        const listeners = {
-            input: inputEventHandler,
-            focus: focusEventHandler,
-            blur: blurEventHandler
-        };
-        this.eventListenersMap.set(form.formElement, listeners);
-        this.addAndTrackListeners(form.formElement, listeners);
-    }
-    addAndTrackListeners(formElement, eventListeners) {
+    // Add the listeners to the form
+    addListeners(formElement, eventListeners) {
         // Add event listeners and store them in the map
         for (const [eventType, listener] of Object.entries(eventListeners)) {
             if (eventType === "focus") {
@@ -5292,24 +5305,24 @@ let FormManager = class FormManager {
                 formElement.addEventListener(eventType, listener);
             }
         }
-        console.log("Listeners added for form:", formElement);
-        console.log(this.eventListenersMap.get(formElement));
     }
-    async removeListeners(formElement) {
-        console.log("Attempting to remove listeners for form:", formElement);
-        console.log("Current eventListenersMap:", this.eventListenersMap);
-        const listeners = this.eventListenersMap.get(formElement);
-        if (listeners) {
-            for (const [eventType, listener] of Object.entries(listeners)) {
-                // Ensure the listener is a function before attempting to remove
-                if (typeof listener === "function") {
-                    // Correctly map the event type for focus and blur
-                    const domEventType = eventType === "focus" ? "focusin" : eventType === "blur" ? "focusout" : eventType;
-                    formElement.removeEventListener(domEventType, listener);
-                    // Optionally, you can log the removal
-                    console.log(`Removed listener for ${domEventType} from`, formElement);
-                }
-                this.eventListenersMap.delete(formElement);
+    clearDebouncersForElement(elementName) {
+        const debouncer = this.debouncers[elementName];
+        if (debouncer) {
+            debouncer.cancel(); // Assuming your debouncer has a cancel method to clear timeouts
+            delete this.debouncers[elementName];
+        }
+    }
+    cleanupResourcesForForm(formElement) {
+        const controls = formElement.elements;
+        for (let i = 0; i < controls.length; i++) {
+            const control = controls[i];
+            if (isNamedControlElement(control)) {
+                // TypeScript is now aware that control is one of the specific elements with a 'name' property
+                const name = control.name;
+                // Now we can safely delete from dirtyMap and clean up debouncers
+                delete this.dirtyMap[name];
+                this.clearDebouncersForElement(name);
             }
         }
     }
@@ -5324,6 +5337,10 @@ FormManager = __decorate([
     __metadata("design:paramtypes", [Object, Object, Object, Object, Object])
 ], FormManager);
 
+// TypeGuard for named control elements
+function isNamedControlElement(element) {
+    return "name" in element && (element instanceof HTMLInputElement || element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement);
+}
 
 
 /***/ }),
@@ -6220,6 +6237,9 @@ let Debouncer = class Debouncer {
             func();
             this.timeoutId = undefined;
         }, waitMilliseconds);
+    }
+    cancel() {
+        clearTimeout(this.timeoutId);
     }
 };
 Debouncer = __decorate([
