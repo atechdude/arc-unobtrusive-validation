@@ -1,0 +1,27 @@
+{
+  "name": "arc-unobtrusive-validation",
+  "version": "1.0.0",
+  "description": "",
+  "main": "arc-unobtrusive-validation.js",
+  "scripts": {
+    "lint": "eslint \"src/**/*.{js,ts,tsx}\"",
+    "build": "tsc",
+    "webpack-build": "webpack --mode development",
+    "webpack-start": "webpack --watch --mode development",
+    "copy-dist": "xcopy \"C:\\Visual Studio Projects\\typescriptprojects\\arc-unobtrusive-validation\\dist\\arc-unobtrusive-validation.js\" \"C:\\Visual Studio Projects\\DfwForSale\\WebUI\\wwwroot\\lib\\arc-unobtrusive-validation\\dist\" /Y && xcopy \"C:\\Visual Studio Projects\\typescriptprojects\\arc-unobtrusive-validation\\dist\\arc-unobtrusive-validation.js.map\" \"C:\\Visual Studio Projects\\DfwForSale\\WebUI\\wwwroot\\lib\\arc-unobtrusive-validation\\dist\" /Y"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.9.1",
+    "clean-webpack-plugin": "^4.0.0",
+    "eslint": "^8.52.0",
+    "inversify": "^6.0.2",
+    "loglevel": "^1.8.1",
+    "reflect-metadata": "^0.1.13",
+    "ts-loader": "^9.5.0",
+    "typescript": "^5.2.2",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
+  }
+}
