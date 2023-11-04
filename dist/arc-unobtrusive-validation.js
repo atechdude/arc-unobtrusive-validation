@@ -4946,7 +4946,26 @@ var __decorate = (undefined && undefined.__decorate) || function (decorators, ta
 };
 
 
+/**
+ * A factory for creating instances of `Debouncer`.
+ *
+ * The `DebouncerFactory` class implements the `IDebouncerFactory` interface
+ * and is responsible for providing a method to create new `Debouncer` objects.
+ * This class uses the `@injectable` decorator to allow it to be injected into
+ * other components, enhancing modularity and testability.
+ *
+ * @see {@link IDebouncerFactory} for interface documentation.
+ */
 let DebouncerFactory = class DebouncerFactory {
+    /**
+     * Creates a new instance of `Debouncer`.
+     *
+     * This method implements the `create` method from the `IDebouncerFactory` interface.
+     * It allows consumers to obtain a fresh instance of `Debouncer` without needing to know
+     * the details of how the `Debouncer` is constructed.
+     *
+     * @returns {IDebouncer} An instance of `Debouncer` which can be used to debounce function calls.
+     */
     create() {
         return new _util_Debouncer__WEBPACK_IMPORTED_MODULE_0__.Debouncer();
     }
@@ -5027,11 +5046,13 @@ class Form {
     isAjax = false;
     attributes;
     elements;
+    element;
     buttons;
     constructor(formElement) {
         this.formElement = formElement;
         this.attributes = formElement.attributes;
         this.elements = formElement.elements;
+        this.element = Array.from(this.elements).find(el => el instanceof Element);
         this.buttons = Array.from(this.elements).filter(el => el instanceof HTMLButtonElement);
         this.init();
     }
@@ -5375,12 +5396,10 @@ var __param = (undefined && undefined.__param) || function (paramIndex, decorato
 
 let Initializer = class Initializer {
     _options;
-    _ruleService;
     _formManager;
     _eventEmitter;
-    constructor(_options, _ruleService, _formManager, _eventEmitter) {
+    constructor(_options, _formManager, _eventEmitter) {
         this._options = _options;
-        this._ruleService = _ruleService;
         this._formManager = _formManager;
         this._eventEmitter = _eventEmitter;
     }
@@ -5409,24 +5428,11 @@ let Initializer = class Initializer {
 Initializer = __decorate([
     (0,inversify__WEBPACK_IMPORTED_MODULE_1__.injectable)(),
     __param(0, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.Options)),
-    __param(1, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.RuleService)),
-    __param(2, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormManager)),
-    __param(3, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventEmitter)),
-    __metadata("design:paramtypes", [Object, Object, Object, Object])
+    __param(1, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormManager)),
+    __param(2, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventEmitter)),
+    __metadata("design:paramtypes", [Object, Object, Object])
 ], Initializer);
 
-/* export class RequiredRule implements IValidationRule {
-    type = 'required';
-    message: string;
-
-    constructor(attributes: { message: string }) {
-        this.message = attributes.message;
-    }
-
-    validate(value: string): boolean {
-        return value.trim().length > 0;
-    }
-} */
 
 
 /***/ }),
@@ -5752,64 +5758,6 @@ RuleFactory = __decorate([
 
 /***/ }),
 
-/***/ "./src/RuleService.ts":
-/*!****************************!*\
-  !*** ./src/RuleService.ts ***!
-  \****************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   RuleService: () => (/* binding */ RuleService)
-/* harmony export */ });
-/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
-/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/inject.js");
-/* harmony import */ var _di_container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./di/container-types */ "./src/di/container-types.ts");
-var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (undefined && undefined.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __param = (undefined && undefined.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-
-
-let RuleService = class RuleService {
-    _validationRuleRegistry;
-    _ruleFactory;
-    constructor(_validationRuleRegistry, _ruleFactory) {
-        this._validationRuleRegistry = _validationRuleRegistry;
-        this._ruleFactory = _ruleFactory;
-    }
-    registerRule(rule) {
-        console.log("Registering rule");
-        // Here you would have some logic to add the rule to the registry.
-        // Assuming _validationRuleRegistry has an addRule method:
-        this._validationRuleRegistry.addRule(rule);
-    }
-    getSortedRules() {
-        // Assuming getRules returns the rules sorted already,
-        // otherwise you will need to sort them before returning.
-        return this._validationRuleRegistry.getRules();
-    }
-};
-RuleService = __decorate([
-    (0,inversify__WEBPACK_IMPORTED_MODULE_1__.injectable)(),
-    __param(0, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ValidationRuleRegistry)),
-    __param(1, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.RuleFactory)),
-    __metadata("design:paramtypes", [Object, Object])
-], RuleService);
-
-
-
-/***/ }),
-
 /***/ "./src/ValidationRuleRegistry.ts":
 /*!***************************************!*\
   !*** ./src/ValidationRuleRegistry.ts ***!
@@ -5831,11 +5779,18 @@ var __decorate = (undefined && undefined.__decorate) || function (decorators, ta
 
 let ValidationRuleRegistry = class ValidationRuleRegistry {
     rules = [];
+    validationAttribute = "data-val";
     addRule(rule) {
         this.rules.push(rule);
     }
-    getRules() {
-        return this.rules;
+    getRulesForControl(input) {
+        const validationTypeAttribute = input.getAttribute(this.validationAttribute);
+        if (!validationTypeAttribute)
+            return [];
+        // Split the validation types into an array, allowing for a single type or a comma-separated list
+        const validationTypes = validationTypeAttribute.split(",").map(type => type.trim());
+        // Filter and return rules that match any of the types in the list
+        return this.rules.filter(rule => validationTypes.includes(rule.type));
     }
 };
 ValidationRuleRegistry = __decorate([
@@ -5857,7 +5812,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   container: () => (/* binding */ container)
 /* harmony export */ });
-/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/container/container.js");
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/container/container.js");
 /* harmony import */ var _container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./container-types */ "./src/di/container-types.ts");
 /* harmony import */ var _logger_debuggingLogger__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../logger/debuggingLogger */ "./src/logger/debuggingLogger.ts");
 /* harmony import */ var _services_loggerService__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../services/loggerService */ "./src/services/loggerService.ts");
@@ -5870,7 +5825,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _FormManager__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../FormManager */ "./src/FormManager.ts");
 /* harmony import */ var _ValidationRuleRegistry__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../ValidationRuleRegistry */ "./src/ValidationRuleRegistry.ts");
 /* harmony import */ var _RuleFactory__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../RuleFactory */ "./src/RuleFactory.ts");
-/* harmony import */ var _RuleService__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../RuleService */ "./src/RuleService.ts");
 
 
 
@@ -5884,8 +5838,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-
-const container = new inversify__WEBPACK_IMPORTED_MODULE_13__.Container();
+const container = new inversify__WEBPACK_IMPORTED_MODULE_12__.Container();
 container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.Logger).to(_services_loggerService__WEBPACK_IMPORTED_MODULE_2__.LoggerService).inRequestScope();
 container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventEmitter).to((_EventEmitter__WEBPACK_IMPORTED_MODULE_4__.EventEmitter)).inRequestScope();
 container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebuggingLogger).to(_logger_debuggingLogger__WEBPACK_IMPORTED_MODULE_1__.DebuggingLogger).inRequestScope();
@@ -5896,7 +5849,6 @@ container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ValidationSer
 container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ObservableFormsCollection).to((_ObservableCollection__WEBPACK_IMPORTED_MODULE_7__.ObservableCollection)).inSingletonScope();
 container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebouncerFactory).to(_DebouncerFactory__WEBPACK_IMPORTED_MODULE_8__.DebouncerFactory).inSingletonScope();
 container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.RuleFactory).to(_RuleFactory__WEBPACK_IMPORTED_MODULE_11__.RuleFactory).inSingletonScope();
-container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.RuleService).to(_RuleService__WEBPACK_IMPORTED_MODULE_12__.RuleService).inSingletonScope();
 container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ValidationRuleRegistry).to(_ValidationRuleRegistry__WEBPACK_IMPORTED_MODULE_10__.ValidationRuleRegistry).inSingletonScope();
 
 
@@ -5927,7 +5879,7 @@ const TYPES = {
     ValidationService: Symbol.for("IValidationService"),
     ValidationRuleRegistry: Symbol.for("IValidationRuleRegistry"),
     RuleFactory: Symbol.for("IRuleFactory"),
-    RuleService: Symbol.for("IRuleService")
+    RulesRegistry: Symbol.for("IRulesRegistry")
 };
 
 
@@ -6018,7 +5970,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   ValidationService: () => (/* binding */ ValidationService)
 /* harmony export */ });
-/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/inject.js");
+/* harmony import */ var _di_container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../di/container-types */ "./src/di/container-types.ts");
 var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -6028,28 +5982,65 @@ var __decorate = (undefined && undefined.__decorate) || function (decorators, ta
 var __metadata = (undefined && undefined.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (undefined && undefined.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+
 
 let ValidationService = class ValidationService {
+    _observableFormsCollection;
+    _validationRulesRegistry;
+    validators = [];
     controlValidityState = new WeakMap();
-    constructor() {
+    constructor(_observableFormsCollection, _validationRulesRegistry) {
+        this._observableFormsCollection = _observableFormsCollection;
+        this._validationRulesRegistry = _validationRulesRegistry;
+        this._observableFormsCollection.addObserver(this);
     }
     async init() {
         // Initialize any needed properties or services here
     }
-    //TODO: Needs to return a Result<IValidationResult>
-    async validateControl(input) {
-        const validate = () => {
-            console.log("Simulated control validate method");
-        };
-        // This is for testing purposes only this will actually be set when we get a return value from the validation method
-        this.controlValidityState.set(input, true);
-        // For later use: Checks the control's validity state. We don't run validation on controls that are already valid
-        const isControlValid = this.controlValidityState.get(input);
-        console.log(isControlValid ? "Control is valid" : "Control is invalid");
-        if (isControlValid) {
-            return;
+    async notify(change) {
+        if ("item" in change) {
+            if (change.type === "add") {
+                console.log("Form added");
+                // Get all form controls from the form
+                const controls = Array.from(change.item.elements);
+                // Iterate over each control to find validation attributes
+                controls.forEach((element) => {
+                    // Cast only if the element is the correct type
+                    if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement) {
+                        // Dynamically get the validation attribute from the registry
+                        const validationAttribute = this._validationRulesRegistry.validationAttribute;
+                        const validationTypesString = element.getAttribute(validationAttribute);
+                        if (validationTypesString) {
+                            // Split the string into individual validation types
+                            const validationTypes = validationTypesString.split(",").map(type => type.trim());
+                            validationTypes.forEach((validationType) => {
+                                // Here you would construct your IValidationRule
+                                // Ensuring you are not duplicating rules and also adding rules specific to this element if necessary
+                                // Implementation depends on your specific validation logic and how rules are determined
+                            });
+                        }
+                    }
+                });
+            }
         }
-        validate();
+    }
+    async validateControl(input) {
+        // Determine the rule(s) for the input by querying the ValidationRuleRegistry
+        const rules = this._validationRulesRegistry.getRulesForControl(input);
+        // Iterate over each rule and find a validator that can handle it
+        for (const rule of rules) {
+            const validator = this.validators.find(v => v.canHandle(rule));
+            if (!validator) {
+                throw new Error(`No validator can handle the rule of type: ${rule.type}`);
+            }
+            if (!validator.validate(input.value, rule)) {
+                // Handle validation failure, e.g., by displaying an error message
+            }
+        }
+        // Handle successful validation, e.g., by clearing any error messages
     }
     // TODO: Refactor put inside a UI Handler
     showValidationMessage(control, message) {
@@ -6111,8 +6102,10 @@ let ValidationService = class ValidationService {
     }
 };
 ValidationService = __decorate([
-    (0,inversify__WEBPACK_IMPORTED_MODULE_0__.injectable)(),
-    __metadata("design:paramtypes", [])
+    (0,inversify__WEBPACK_IMPORTED_MODULE_1__.injectable)(),
+    __param(0, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ObservableFormsCollection)),
+    __param(1, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ValidationRuleRegistry)),
+    __metadata("design:paramtypes", [Object, Object])
 ], ValidationService);
 
 
@@ -6223,10 +6216,30 @@ var __metadata = (undefined && undefined.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 
+/**
+ * Provides a mechanism to debounce function execution.
+ *
+ * The `Debouncer` class is responsible for delaying the execution of a function until after a certain time
+ * has elapsed since the last time it was invoked. This is useful in situations where you want to
+ * limit the rate at which a function is called, such as when responding to user input or window resizing.
+ *
+ * The class is marked with `@injectable`, allowing it to be used with dependency injection frameworks.
+ */
 let Debouncer = class Debouncer {
     constructor() {
     }
     timeoutId;
+    /**
+     * Debounces the provided function.
+     *
+     * This method takes a function and a wait time in milliseconds. It will delay the execution of the function
+     * until after the wait time has elapsed since the last call to debounce. Subsequent calls to debounce
+     * with a new function will cancel any pending execution from previous calls.
+     *
+     * @template T - The type of the function to debounce.
+     * @param {T} func - The function to be debounced.
+     * @param {number} waitMilliseconds - The number of milliseconds to wait before calling the function.
+     */
     debounce(func, waitMilliseconds) {
         // Clear the existing timeout, if there is one
         if (this.timeoutId !== undefined) {
@@ -6238,6 +6251,12 @@ let Debouncer = class Debouncer {
             this.timeoutId = undefined;
         }, waitMilliseconds);
     }
+    /**
+     * Cancels any pending debounced function calls.
+     *
+     * If there is a debounced function that has not yet been executed, calling this method will prevent
+     * that function from being called.
+     */
     cancel() {
         clearTimeout(this.timeoutId);
     }

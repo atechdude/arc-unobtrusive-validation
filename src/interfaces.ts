@@ -25,18 +25,11 @@ export interface IDebouncer {
     cancel(): void
 }
 
-
-
-
-
 export interface IEventEmitter<TEvents> {
     on<K extends keyof TEvents>(event: K, listener: (data: TEvents[K]) => void): void;
     off<K extends keyof TEvents>(event: K, listener: (data: TEvents[K]) => void): void;
     emit<K extends keyof TEvents>(event: K, data: TEvents[K]): void;
 }
-
-
-
 
 export interface IEventMap<T> {
     [event: string]: IEventData<T>;
@@ -68,6 +61,7 @@ export interface IForm {
     isAjax: boolean;
     attributes: NamedNodeMap;
     elements: HTMLFormControlsCollection;
+    element: Element;
     buttons: HTMLButtonElement[];
     init(): void
 }
@@ -87,15 +81,16 @@ export interface IValidationRule {
     type: string;
     message: string;
     priority: number;
-    validate(value: string, rule?: IValidationRule): boolean;
-
+}
+export interface IValidator {
+    canHandle(rule: IValidationRule): boolean;
+    validate(value: string, rule: IValidationRule): boolean;
 }
 
-
 export interface IValidationService {
-    init(): void
-    validateForm(form: IForm): void
-    validateControl(input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): Promise<void>
+    init(validators: IValidator[]): void; // Initialization can now take an array of validators.
+    validateForm(form: IForm): void; // Validation of the entire form.
+    validateControl(input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): Promise<void>; // Individual control validation.
 }
 
 export interface IValidationResult {
@@ -114,8 +109,9 @@ export interface IRuleService {
     getSortedRules(): IValidationRule[];
 }
 export interface IValidationRuleRegistry {
+    validationAttribute: string;
     addRule(rule: IValidationRule): void;
-    getRules(): IValidationRule[];
+    getRulesForControl(input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): IValidationRule[]
 }
 
 /**

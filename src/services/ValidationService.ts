@@ -1,16 +1,20 @@
-﻿import { injectable } from "inversify";
-import { IForm, IValidationResult, IValidationService } from "../interfaces";
+﻿import { inject, injectable } from "inversify";
+import { IChange, IForm, IObservableCollection, IValidationRule, IValidationRuleRegistry, IValidationService, IValidator } from "../interfaces";
+import { TYPES } from "../di/container-types";
 
-import { Result } from "../Result";
+
+
 
 @injectable()
 export class ValidationService implements IValidationService {
-
+    private validators: IValidator[] = [];
 
     private controlValidityState: WeakMap<HTMLElement, boolean> = new WeakMap();
 
-    constructor() {
-
+    constructor(
+        @inject(TYPES.ObservableFormsCollection) private readonly _observableFormsCollection: IObservableCollection<IForm>,
+        @inject(TYPES.ValidationRuleRegistry) private readonly _validationRulesRegistry: IValidationRuleRegistry) {
+        this._observableFormsCollection.addObserver(this);
     }
 
 
@@ -19,37 +23,56 @@ export class ValidationService implements IValidationService {
         // Initialize any needed properties or services here
     }
 
+    async notify(change: IChange<IForm>): Promise<void> {
+        if ("item" in change) {
+            if (change.type === "add") {
+                console.log("Form added");
+                // Get all form controls from the form
+                const controls = Array.from(change.item.elements);
 
-    //TODO: Needs to return a Result<IValidationResult>
-    async validateControl(input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): Promise<void> {
-
-
-        const validate = (): void => {
-
-
-            console.log("Simulated control validate method");
-        };
-
-
-
-
-
-        // This is for testing purposes only this will actually be set when we get a return value from the validation method
-        this.controlValidityState.set(input, true);
-
-
-
-        // For later use: Checks the control's validity state. We don't run validation on controls that are already valid
-        const isControlValid = this.controlValidityState.get(input);
-        console.log(isControlValid ? "Control is valid" : "Control is invalid");
-
-        if(isControlValid){
-            return;
+                // Iterate over each control to find validation attributes
+                controls.forEach((element) => {
+                    // Cast only if the element is the correct type
+                    if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement) {
+                        // Dynamically get the validation attribute from the registry
+                        const validationAttribute = this._validationRulesRegistry.validationAttribute;
+                        const validationTypesString = element.getAttribute(validationAttribute);
+                        if (validationTypesString) {
+                            // Split the string into individual validation types
+                            const validationTypes = validationTypesString.split(",").map(type => type.trim());
+                            validationTypes.forEach((validationType) => {
+                                // Here you would construct your IValidationRule
+                                // Ensuring you are not duplicating rules and also adding rules specific to this element if necessary
+                                // Implementation depends on your specific validation logic and how rules are determined
+                            });
+                        }
+                    }
+                });
+            }
         }
-        validate();
-
-
     }
+
+
+
+
+
+    public async validateControl(input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): Promise<void> {
+        // Determine the rule(s) for the input by querying the ValidationRuleRegistry
+        const rules = this._validationRulesRegistry.getRulesForControl(input);
+
+        // Iterate over each rule and find a validator that can handle it
+        for (const rule of rules) {
+            const validator = this.validators.find(v => v.canHandle(rule));
+            if (!validator) {
+                throw new Error(`No validator can handle the rule of type: ${rule.type}`);
+            }
+            if (!validator.validate(input.value, rule)) {
+                // Handle validation failure, e.g., by displaying an error message
+            }
+        }
+        // Handle successful validation, e.g., by clearing any error messages
+    }
+
 
     // TODO: Refactor put inside a UI Handler
     private showValidationMessage(control: HTMLInputElement, message: string): void {

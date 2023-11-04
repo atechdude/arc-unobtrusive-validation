@@ -12,7 +12,7 @@ import { DebouncerFactory } from "../DebouncerFactory";
 import { FormManager } from "../FormManager";
 import { ValidationRuleRegistry } from "../ValidationRuleRegistry";
 import { RuleFactory } from "../RuleFactory";
-import { RuleService } from "../RuleService";
+
 
 
 
@@ -31,6 +31,6 @@ container.bind<IObservableCollection<IForm>>(TYPES.ObservableFormsCollection).to
 container.bind<IDebouncerFactory>(TYPES.DebouncerFactory).to(DebouncerFactory).inSingletonScope();
 container.bind<IRuleFactory>(TYPES.RuleFactory).to(RuleFactory).inSingletonScope();
 
-container.bind<IRuleService>(TYPES.RuleService).to(RuleService).inSingletonScope();
+
 container.bind<IValidationRuleRegistry>(TYPES.ValidationRuleRegistry).to(ValidationRuleRegistry).inSingletonScope();
 export { container };

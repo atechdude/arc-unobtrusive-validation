@@ -11,7 +11,7 @@ const TYPES = {
     ValidationService: Symbol.for("IValidationService"),
     ValidationRuleRegistry: Symbol.for("IValidationRuleRegistry"),
     RuleFactory: Symbol.for("IRuleFactory"),
-    RuleService: Symbol.for("IRuleService")
+    RulesRegistry: Symbol.for("IRulesRegistry")
 
 };
 export { TYPES };

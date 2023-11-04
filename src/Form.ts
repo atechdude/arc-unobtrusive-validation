@@ -5,11 +5,13 @@ export class Form implements IForm {
     isAjax: boolean = false;
     attributes: NamedNodeMap;
     elements: HTMLFormControlsCollection;
+    element: Element;
     buttons: HTMLButtonElement[];
     constructor(formElement: HTMLFormElement) {
         this.formElement = formElement;
         this.attributes = formElement.attributes;
         this.elements = formElement.elements;
+        this.element = Array.from(this.elements).find(el => el instanceof Element) as Element;
         this.buttons = Array.from(this.elements).filter(el => el instanceof HTMLButtonElement) as HTMLButtonElement[];
         this.init();
     }
