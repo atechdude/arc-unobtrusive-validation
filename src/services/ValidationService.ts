@@ -24,33 +24,25 @@ export class ValidationService implements IValidationService {
     }
 
     async notify(change: IChange<IForm>): Promise<void> {
-        if ("item" in change) {
-            if (change.type === "add") {
-                console.log("Form added");
-                // Get all form controls from the form
-                const controls = Array.from(change.item.elements);
-
-                // Iterate over each control to find validation attributes
-                controls.forEach((element) => {
-                    // Cast only if the element is the correct type
-                    if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement) {
-                        // Dynamically get the validation attribute from the registry
-                        const validationAttribute = this._validationRulesRegistry.validationAttribute;
-                        const validationTypesString = element.getAttribute(validationAttribute);
-                        if (validationTypesString) {
-                            // Split the string into individual validation types
-                            const validationTypes = validationTypesString.split(",").map(type => type.trim());
-                            validationTypes.forEach((validationType) => {
-                                // Here you would construct your IValidationRule
-                                // Ensuring you are not duplicating rules and also adding rules specific to this element if necessary
-                                // Implementation depends on your specific validation logic and how rules are determined
-                            });
-                        }
-                    }
-                });
-            }
+        if ("item" in change && change.type === "add") {
+            console.log("Form added");
+            // Get all form controls from the form
+            const controls = Array.from(change.item.elements);
+            // Iterate over each control to apply validation
+            controls.forEach((element) => {
+                if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement) {
+                    // Use the existing rules from the ValidationRuleRegistry
+                    const rules = this._validationRulesRegistry.getRulesForControl(element);
+                    // Now process each rule on the element as needed
+                    rules.forEach(rule => {
+                        // Apply the validation rule to the element
+                        // ...
+                    });
+                }
+            });
         }
     }
+
 
 
 

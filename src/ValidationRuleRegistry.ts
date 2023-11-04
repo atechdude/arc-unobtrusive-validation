@@ -6,6 +6,9 @@ export class ValidationRuleRegistry implements IValidationRuleRegistry
     private rules: IValidationRule[] = [];
     public validationAttribute: string = "data-val";
 
+    public setValidationAttribute(attribute: string): void {
+        this.validationAttribute = attribute;
+    }
     public addRule(rule: IValidationRule): void {
         this.rules.push(rule);
     }

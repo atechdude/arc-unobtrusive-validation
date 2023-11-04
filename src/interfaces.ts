@@ -111,7 +111,8 @@ export interface IRuleService {
 export interface IValidationRuleRegistry {
     validationAttribute: string;
     addRule(rule: IValidationRule): void;
-    getRulesForControl(input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): IValidationRule[]
+    getRulesForControl(input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): IValidationRule[];
+    setValidationAttribute(attribute: string): void;
 }
 
 /**
