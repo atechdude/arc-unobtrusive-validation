@@ -10,10 +10,12 @@ export class FormManager implements IFormManager {
     eventListenersMap: WeakMap<Element, Record<string, EventListener>> = new WeakMap();
     dirtyMap: { [key: string]: boolean } = {};
     debouncers: { [key: string]: Debouncer } = {};
+    private mutationObserver: MutationObserver | null = null;
 
     constructor(
         @inject(TYPES.FormFactory) private readonly _formFactory: IFormFactory,
         @inject(TYPES.DebouncerFactory) private readonly _debounceFactory: IDebouncerFactory,
+        @inject(TYPES.EventService) private readonly _eventService: IEventService,
         @inject(TYPES.ObservableFormsCollection) private readonly _formsCollection: IObservableCollection<IForm>,
         @inject(TYPES.ValidationService) private readonly _validationService: IValidationService,
         @inject(TYPES.DebuggingLogger) private readonly _logger: IDecoratedLogger) {
@@ -23,13 +25,88 @@ export class FormManager implements IFormManager {
     }
 
     async init(): Promise<void> {
-        const forms = this.createForms();
-        if (!forms) {
-            return;
-        }
-        // Ensure setupForms is awaited so that it completes before init resolves
-        await this.setupForms(forms);
+        this.createForms();
+        this.observeDOMForForms();
+        const forms = this._formsCollection.getItems();
+        await this.setupForms(forms).catch(error => {
+            this._logger.getLogger().error(error instanceof Error ? error.message : "Error in setupForms: " + error);
+        });
     }
+
+    observeDOMForForms(): void {
+        // If the observer already exists, disconnect it
+        if (this.mutationObserver) {
+            this.mutationObserver.disconnect();
+        }
+
+        this.mutationObserver = new MutationObserver((mutationsList) => {
+            for (const mutation of mutationsList) {
+                if (mutation.type === "childList") {
+                    // Immediately-invoked async function expression (IIFE)
+                    (async () => {
+                        // Process direct forms
+                        const directForms = Array.from(mutation.addedNodes)
+                            .filter((node): node is HTMLFormElement => node instanceof HTMLFormElement);
+                        for (const form of directForms) {
+                            await this.addDynamicForm(form);
+                        }
+
+                        // Process nested forms
+                        const nestedForms = Array.from(mutation.addedNodes)
+                            .filter((node): node is HTMLElement => node instanceof HTMLElement)
+                            .flatMap(node => Array.from(node.querySelectorAll("form")));
+                        for (const form of nestedForms) {
+                            await this.addDynamicForm(form);
+                        }
+                    })();
+                }
+            }
+        });
+
+        // Only one observer instance should be running
+        this.mutationObserver.observe(document.body, { childList: true, subtree: true });
+    }
+
+    async addDynamicForm (node: HTMLFormElement): Promise<void>{
+        const formName = node.name;
+        try {
+            // Check if the form is already in the collection
+            const existingForm = this._formsCollection.findItem(
+                form => form.formElement.id === node.id || form.formElement.name === node.name
+            );
+
+
+            if (existingForm) {
+                this._formsCollection.removeItem(existingForm);
+                this._logger.getLogger().info(`Updated form '${formName}' will replace the existing one.`);
+            }
+
+            // Proceed with form creation
+            const formResults = this._formFactory.create(node);
+            if (!formResults.isSuccess) {
+                const error = Result.handleError(formResults);
+                this._logger.getLogger().error(error?.message || "Unknown error creating form");
+                return;
+            }
+            const form = Result.handleSuccess(formResults);
+
+            if (form == undefined) {
+                this._logger.getLogger().error("Form creation returned a null result");
+                return;
+            }
+            // Add the new form to the collection
+            this._formsCollection.addItem(form);
+
+            // Setup the form
+            await this.setupForms([form]).catch(error => {
+                this._logger.getLogger().error(error instanceof Error ? error.message : "Error in setupForms: " + error);
+            });
+
+        } catch (error: any) {
+            this._logger.getLogger().error(`Error while adding dynamic form '${formName}': ${error.message}`);
+        }
+    }
+
 
     // Sets up all of the forms, add them to the collection, and sets up listeners
     async setupForms(forms: IForm[]): Promise<void> {
@@ -37,6 +114,8 @@ export class FormManager implements IFormManager {
             this._logger.getLogger().error(new Error("No forms provided to setupForms."));
             return;
         }
+
+        // This needs to be changed to read from the observable collection
         for (const form of forms) {
             try {
                 // Remove any existing listeners for the form. ("This only applies to forms loaded dynamically since a page reload nerfs all state")
@@ -46,8 +125,7 @@ export class FormManager implements IFormManager {
                 // Ensure this promise is awaited so that listeners are set up before proceeding
                 await this.configureListeners(form);
 
-                // Add the form to the observable collection
-                this._formsCollection.addItem(form);
+
             } catch (error) {
                 // Log any errors
                 this._logger.getLogger().error(error instanceof Error ? error : new Error("Error in setupForms: " + error));
@@ -138,10 +216,10 @@ export class FormManager implements IFormManager {
         }
     }
 
-    // Get all of the form elements
-    createForms(): IForm[] {
+    // Get all of the form elements and create the Form objects. This only works for static forms. Please see observeDOMForForms for dynamic forms
+    createForms(): void {
         const forms = document.querySelectorAll("form");
-        const formArray: IForm[] = [];
+
         for (let i = 0; i < forms.length; i++) {
             try {
                 const formResults = this._formFactory.create(forms[i]);
@@ -153,9 +231,16 @@ export class FormManager implements IFormManager {
                 }
                 // Get the form from the result
                 const form = Result.handleSuccess(formResults);
-                // Add the form to the array if it's not null
+
                 if (form) {
-                    formArray.push(form);
+                    // Check if the form is already in the collection
+                    const existingForm = this._formsCollection.findItem(f => f.formElement === form.formElement);
+                    if (existingForm) {
+                        this._formsCollection.removeItem(existingForm);
+                        this._logger.getLogger().info(`Form with id/name: ${forms[i].id || forms[i].name} will be refreshed in the collection.`);
+                    }
+                    // Add the form to the observable collection
+                    this._formsCollection.addItem(form);
                 } else {
                     this._logger.getLogger().error(new Error("Form creation returned a null result"));
                 }
@@ -164,7 +249,6 @@ export class FormManager implements IFormManager {
                 this._logger.getLogger().error(error instanceof Error ? error : new Error("An unexpected error occurred"));
             }
         }
-        return formArray; // Return the formArray after processing all forms
     }
 
     // Add the listeners to the form

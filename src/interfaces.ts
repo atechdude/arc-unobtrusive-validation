@@ -1,10 +1,14 @@
 ﻿import log from "loglevel";
 import { Result } from "./Result";
 import { RuleConstructor } from "./Types";
+import { Debouncer } from "./util/Debouncer";
 
 export interface IOptions {
     debug: boolean;
     logLevel: string;
+    customRules?: IValidationRule[];
+    [key: string]: any;
+    autoInit?: boolean;
 }
 
 
@@ -17,13 +21,7 @@ export interface IDecoratedLogger {
 export interface IInitializer {
     init(): Promise<void>
 }
-export interface IDebouncerFactory {
-    create(): IDebouncer;
-}
-export interface IDebouncer {
-    debounce<T extends (...args: any[]) => void>(func: T, waitMilliseconds: number): void;
-    cancel(): void
-}
+
 
 export interface IEventEmitter<TEvents> {
     on<K extends keyof TEvents>(event: K, listener: (data: TEvents[K]) => void): void;
@@ -51,7 +49,7 @@ export interface IAppEvents {
 }
 export interface IFormManager {
     init(): Promise<void>;
-    createForms(): IForm[];
+    createForms(): void;
     setupForms(forms: IForm[]): Promise<void>;
     configureListeners(form: IForm): Promise<void>;
     removeListeners(formElement:HTMLFormElement): Promise<void>;
@@ -113,6 +111,27 @@ export interface IValidationRuleRegistry {
     addRule(rule: IValidationRule): void;
     getRulesForControl(input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): IValidationRule[];
     setValidationAttribute(attribute: string): void;
+}
+
+// State Management Interfaces
+export interface IStateManager {
+    makeControlDirty(controlName: string): void;
+    isControlDirty(controlName: string): boolean;
+    clearControlDirtyState(controlName: string): void;
+    clearControlsDirtyState(controlNames: string[]): void
+}
+// Debouncer Interfaces
+export interface IDebouncerFactory {
+    create(): IDebouncer;
+}
+export interface IDebouncer {
+    debounce<T extends (...args: any[]) => void>(func: T, waitMilliseconds: number): void;
+    cancel(): void
+}
+export interface IDebouncerManager {
+    getDebouncerForControl(controlName: string): Debouncer;
+    clearDebouncersForControl(controlName: string): void;
+    clearDebouncersForControls(controlNames: string[]): void
 }
 
 /**

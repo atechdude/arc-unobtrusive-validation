@@ -5165,6 +5165,7 @@ let FormManager = class FormManager {
     eventListenersMap = new WeakMap();
     dirtyMap = {};
     debouncers = {};
+    mutationObserver = null;
     constructor(_formFactory, _debounceFactory, _formsCollection, _validationService, _logger) {
         this._formFactory = _formFactory;
         this._debounceFactory = _debounceFactory;
@@ -5175,12 +5176,74 @@ let FormManager = class FormManager {
         this.eventListenersMap = new WeakMap();
     }
     async init() {
-        const forms = this.createForms();
-        if (!forms) {
-            return;
+        this.createForms();
+        this.observeDOMForForms();
+        const forms = this._formsCollection.getItems();
+        await this.setupForms(forms).catch(error => {
+            this._logger.getLogger().error(error instanceof Error ? error.message : "Error in setupForms: " + error);
+        });
+    }
+    observeDOMForForms() {
+        // If the observer already exists, disconnect it
+        if (this.mutationObserver) {
+            this.mutationObserver.disconnect();
         }
-        // Ensure setupForms is awaited so that it completes before init resolves
-        await this.setupForms(forms);
+        this.mutationObserver = new MutationObserver((mutationsList) => {
+            for (const mutation of mutationsList) {
+                if (mutation.type === "childList") {
+                    // Immediately-invoked async function expression (IIFE)
+                    (async () => {
+                        // Process direct forms
+                        const directForms = Array.from(mutation.addedNodes)
+                            .filter((node) => node instanceof HTMLFormElement);
+                        for (const form of directForms) {
+                            await this.addDynamicForm(form);
+                        }
+                        // Process nested forms
+                        const nestedForms = Array.from(mutation.addedNodes)
+                            .filter((node) => node instanceof HTMLElement)
+                            .flatMap(node => Array.from(node.querySelectorAll("form")));
+                        for (const form of nestedForms) {
+                            await this.addDynamicForm(form);
+                        }
+                    })();
+                }
+            }
+        });
+        // Only one observer instance should be running
+        this.mutationObserver.observe(document.body, { childList: true, subtree: true });
+    }
+    async addDynamicForm(node) {
+        const formName = node.name;
+        try {
+            // Check if the form is already in the collection
+            const existingForm = this._formsCollection.findItem(form => form.formElement.id === node.id || form.formElement.name === node.name);
+            if (existingForm) {
+                this._formsCollection.removeItem(existingForm);
+                this._logger.getLogger().info(`Updated form '${formName}' will replace the existing one.`);
+            }
+            // Proceed with form creation
+            const formResults = this._formFactory.create(node);
+            if (!formResults.isSuccess) {
+                const error = _Result__WEBPACK_IMPORTED_MODULE_1__.Result.handleError(formResults);
+                this._logger.getLogger().error(error?.message || "Unknown error creating form");
+                return;
+            }
+            const form = _Result__WEBPACK_IMPORTED_MODULE_1__.Result.handleSuccess(formResults);
+            if (form == undefined) {
+                this._logger.getLogger().error("Form creation returned a null result");
+                return;
+            }
+            // Add the new form to the collection
+            this._formsCollection.addItem(form);
+            // Setup the form
+            await this.setupForms([form]).catch(error => {
+                this._logger.getLogger().error(error instanceof Error ? error.message : "Error in setupForms: " + error);
+            });
+        }
+        catch (error) {
+            this._logger.getLogger().error(`Error while adding dynamic form '${formName}': ${error.message}`);
+        }
     }
     // Sets up all of the forms, add them to the collection, and sets up listeners
     async setupForms(forms) {
@@ -5188,6 +5251,7 @@ let FormManager = class FormManager {
             this._logger.getLogger().error(new Error("No forms provided to setupForms."));
             return;
         }
+        // This needs to be changed to read from the observable collection
         for (const form of forms) {
             try {
                 // Remove any existing listeners for the form. ("This only applies to forms loaded dynamically since a page reload nerfs all state")
@@ -5196,8 +5260,6 @@ let FormManager = class FormManager {
                 // Setup Listeners
                 // Ensure this promise is awaited so that listeners are set up before proceeding
                 await this.configureListeners(form);
-                // Add the form to the observable collection
-                this._formsCollection.addItem(form);
             }
             catch (error) {
                 // Log any errors
@@ -5279,10 +5341,9 @@ let FormManager = class FormManager {
             this.eventListenersMap.delete(formElement);
         }
     }
-    // Get all of the form elements
+    // Get all of the form elements and create the Form objects. This only works for static forms. Please see observeDOMForForms for dynamic forms
     createForms() {
         const forms = document.querySelectorAll("form");
-        const formArray = [];
         for (let i = 0; i < forms.length; i++) {
             try {
                 const formResults = this._formFactory.create(forms[i]);
@@ -5294,9 +5355,15 @@ let FormManager = class FormManager {
                 }
                 // Get the form from the result
                 const form = _Result__WEBPACK_IMPORTED_MODULE_1__.Result.handleSuccess(formResults);
-                // Add the form to the array if it's not null
                 if (form) {
-                    formArray.push(form);
+                    // Check if the form is already in the collection
+                    const existingForm = this._formsCollection.findItem(f => f.formElement === form.formElement);
+                    if (existingForm) {
+                        this._formsCollection.removeItem(existingForm);
+                        this._logger.getLogger().info(`Form with id/name: ${forms[i].id || forms[i].name} will be refreshed in the collection.`);
+                    }
+                    // Add the form to the observable collection
+                    this._formsCollection.addItem(form);
                 }
                 else {
                     this._logger.getLogger().error(new Error("Form creation returned a null result"));
@@ -5307,7 +5374,6 @@ let FormManager = class FormManager {
                 this._logger.getLogger().error(error instanceof Error ? error : new Error("An unexpected error occurred"));
             }
         }
-        return formArray; // Return the formArray after processing all forms
     }
     // Add the listeners to the form
     addListeners(formElement, eventListeners) {
@@ -5780,6 +5846,9 @@ var __decorate = (undefined && undefined.__decorate) || function (decorators, ta
 let ValidationRuleRegistry = class ValidationRuleRegistry {
     rules = [];
     validationAttribute = "data-val";
+    setValidationAttribute(attribute) {
+        this.validationAttribute = attribute;
+    }
     addRule(rule) {
         this.rules.push(rule);
     }
@@ -5869,6 +5938,9 @@ __webpack_require__.r(__webpack_exports__);
 const TYPES = {
     Options: Symbol.for("IOptions"),
     Logger: Symbol.for("ILoggerService"),
+    EventService: Symbol.for("IEventService"),
+    StateManager: Symbol.for("IStateManager"),
+    DebouncerManager: Symbol.for("IDebouncerManager"),
     EventEmitter: Symbol.for("IEventEmitter"),
     DebuggingLogger: Symbol.for("IDecoratedLogger"),
     Initializer: Symbol.for("IInitializer"),
@@ -5878,8 +5950,7 @@ const TYPES = {
     ObservableFormsCollection: Symbol.for("IObservableCollection"),
     ValidationService: Symbol.for("IValidationService"),
     ValidationRuleRegistry: Symbol.for("IValidationRuleRegistry"),
-    RuleFactory: Symbol.for("IRuleFactory"),
-    RulesRegistry: Symbol.for("IRulesRegistry")
+    RuleFactory: Symbol.for("IRuleFactory")
 };
 
 
@@ -6001,30 +6072,22 @@ let ValidationService = class ValidationService {
         // Initialize any needed properties or services here
     }
     async notify(change) {
-        if ("item" in change) {
-            if (change.type === "add") {
-                console.log("Form added");
-                // Get all form controls from the form
-                const controls = Array.from(change.item.elements);
-                // Iterate over each control to find validation attributes
-                controls.forEach((element) => {
-                    // Cast only if the element is the correct type
-                    if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement) {
-                        // Dynamically get the validation attribute from the registry
-                        const validationAttribute = this._validationRulesRegistry.validationAttribute;
-                        const validationTypesString = element.getAttribute(validationAttribute);
-                        if (validationTypesString) {
-                            // Split the string into individual validation types
-                            const validationTypes = validationTypesString.split(",").map(type => type.trim());
-                            validationTypes.forEach((validationType) => {
-                                // Here you would construct your IValidationRule
-                                // Ensuring you are not duplicating rules and also adding rules specific to this element if necessary
-                                // Implementation depends on your specific validation logic and how rules are determined
-                            });
-                        }
-                    }
-                });
-            }
+        if ("item" in change && change.type === "add") {
+            console.log(change.item);
+            // Get all form controls from the form
+            const controls = Array.from(change.item.elements);
+            // Iterate over each control to apply validation
+            controls.forEach((element) => {
+                if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement) {
+                    // Use the existing rules from the ValidationRuleRegistry
+                    const rules = this._validationRulesRegistry.getRulesForControl(element);
+                    // Now process each rule on the element as needed
+                    rules.forEach(rule => {
+                        // Apply the validation rule to the element
+                        // ...
+                    });
+                }
+            });
         }
     }
     async validateControl(input) {
@@ -6369,38 +6432,89 @@ __webpack_require__.r(__webpack_exports__);
 
 
 class UnobtrusiveValidation {
+    static _currentInstance = null;
+    _options;
     _logger;
     _initializer;
-    _options;
+    _validationRuleRegistry;
+    _initialized = false;
+    static defaultOptions = {
+        debug: false,
+        logLevel: "info",
+        autoInit: true
+    };
     constructor(options) {
-        this._options = options; // Save the passed options
+        this._options = { ...UnobtrusiveValidation.defaultOptions, ...options };
+        if (this._options.autoInit !== false) {
+            this.init().catch(err => console.error("Initialization failed", err));
+        }
     }
-    async init() {
-        // Merge the provided options with defaults
-        const finalOptions = {
-            debug: false,
-            logLevel: "info",
-            ...this._options // Use the options saved in the constructor
-        };
+    async init(force = false) {
+        if (this._initialized && !force) {
+            this._logger?.getLogger().info("UnobtrusiveValidation already initialized, skipping...");
+            return;
+        }
+        // ...existing initialization logic...
+        this._initialized = true;
+        console.log("UnobtrusiveValidation init");
+        // Initialization logic here
         if (_di_container_config__WEBPACK_IMPORTED_MODULE_1__.container.isBound(_di_container_types__WEBPACK_IMPORTED_MODULE_2__.TYPES.Options)) {
             _di_container_config__WEBPACK_IMPORTED_MODULE_1__.container.unbind(_di_container_types__WEBPACK_IMPORTED_MODULE_2__.TYPES.Options);
         }
-        _di_container_config__WEBPACK_IMPORTED_MODULE_1__.container.bind(_di_container_types__WEBPACK_IMPORTED_MODULE_2__.TYPES.Options).toConstantValue(finalOptions);
+        // Bind the options to the container
+        _di_container_config__WEBPACK_IMPORTED_MODULE_1__.container.bind(_di_container_types__WEBPACK_IMPORTED_MODULE_2__.TYPES.Options).toConstantValue(this._options);
+        // Get the logger from the container
         this._logger = _di_container_config__WEBPACK_IMPORTED_MODULE_1__.container.get(_di_container_types__WEBPACK_IMPORTED_MODULE_2__.TYPES.DebuggingLogger);
+        // Get the validation rule registry from the container
+        this._validationRuleRegistry = _di_container_config__WEBPACK_IMPORTED_MODULE_1__.container.get(_di_container_types__WEBPACK_IMPORTED_MODULE_2__.TYPES.ValidationRuleRegistry);
+        // Get the initializer from the container
         this._initializer = _di_container_config__WEBPACK_IMPORTED_MODULE_1__.container.get(_di_container_types__WEBPACK_IMPORTED_MODULE_2__.TYPES.Initializer);
         this._logger.getLogger().info("UnobtrusiveValidation initialized");
+        // Initialize the initializer
         await this._initializer.init();
+        this._initialized = true;
+    }
+    static getInstance(options = {}) {
+        const effectiveOptions = Object.keys(options).length === 0
+            ? UnobtrusiveValidation.defaultOptions
+            : { ...UnobtrusiveValidation.defaultOptions, ...options };
+        if (!this._currentInstance) {
+            this._currentInstance = new UnobtrusiveValidation(effectiveOptions);
+        }
+        else {
+            // Handle case when options are passed after the instance was created.
+            // This can be a full reconfiguration, or you might want to ignore it,
+            // or handle specific properties like autoInit, based on your application's needs.
+            this._currentInstance.configure(effectiveOptions);
+        }
+        return this._currentInstance;
+    }
+    configure(options) {
+        // First, check if options actually need updating to prevent unnecessary re-initialization.
+        const optionsChanged = Object.keys(options).some(key => this._options[key] !== options[key]);
+        if (!optionsChanged) {
+            return; // No changes, so no need to re-initialize.
+        }
+        // Update the internal options with the new settings.
+        this._options = { ...this._options, ...options };
+        // You may want to check for specific options that require re-initialization.
+        if (options.autoInit !== undefined) {
+            if (options.autoInit) {
+                // Call the init method to re-initialize.
+                this.init().catch(err => console.error("Re-initialization failed", err));
+            }
+            else {
+                // Handle the case where autoInit is false, such as cleaning up resources.
+                this.deinit().catch(err => console.error("De-initialization failed", err));
+            }
+        }
+        // Other options can be handled here as well if they require special logic when changed.
+    }
+    async deinit() {
+        // De-initialization logic here
+        // Nothing to do here for now
     }
 }
-async function initializeUnobtrusiveValidation() {
-    const defaultOptions = {
-        debug: true
-    };
-    // Pass the defaultOptions to the constructor
-    const validationInstance = new UnobtrusiveValidation(defaultOptions);
-    await validationInstance.init();
-}
-initializeUnobtrusiveValidation();
 
 })();
 

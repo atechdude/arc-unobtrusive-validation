@@ -1,6 +1,9 @@
 const TYPES = {
     Options: Symbol.for("IOptions"),
     Logger: Symbol.for("ILoggerService"),
+    EventService: Symbol.for("IEventService"),
+    StateManager: Symbol.for("IStateManager"),
+    DebouncerManager: Symbol.for("IDebouncerManager"),
     EventEmitter: Symbol.for("IEventEmitter"),
     DebuggingLogger: Symbol.for("IDecoratedLogger"),
     Initializer: Symbol.for("IInitializer"),
@@ -10,8 +13,8 @@ const TYPES = {
     ObservableFormsCollection: Symbol.for("IObservableCollection"),
     ValidationService: Symbol.for("IValidationService"),
     ValidationRuleRegistry: Symbol.for("IValidationRuleRegistry"),
-    RuleFactory: Symbol.for("IRuleFactory"),
-    RulesRegistry: Symbol.for("IRulesRegistry")
+    RuleFactory: Symbol.for("IRuleFactory")
+
 
 };
 export { TYPES };
