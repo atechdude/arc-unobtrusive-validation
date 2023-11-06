@@ -3,18 +3,17 @@ import { IForm, IFormFactory } from "./interfaces";
 import { Result } from "./Result";
 import { Form } from "./Form";
 
-
 @injectable()
 export class FormFactory implements IFormFactory {
-    constructor() {
-    }
+    constructor() {}
     create(formElement: HTMLFormElement): Result<IForm> {
         try {
             if (formElement === undefined) {
-                return new Result<IForm>(new Error("Form Element Is Undefined"));
+                return new Result<IForm>(
+                    new Error("Form Element Is Undefined")
+                );
             }
             const form = new Form(formElement);
-
 
             return new Result<IForm>(form);
         } catch (error: unknown) {

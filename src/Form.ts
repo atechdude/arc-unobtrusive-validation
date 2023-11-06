@@ -11,12 +11,14 @@ export class Form implements IForm {
         this.formElement = formElement;
         this.attributes = formElement.attributes;
         this.elements = formElement.elements;
-        this.element = Array.from(this.elements).find(el => el instanceof Element) as Element;
-        this.buttons = Array.from(this.elements).filter(el => el instanceof HTMLButtonElement) as HTMLButtonElement[];
+        this.element = Array.from(this.elements).find(
+            (el) => el instanceof Element
+        ) as Element;
+        this.buttons = Array.from(this.elements).filter(
+            (el) => el instanceof HTMLButtonElement
+        ) as HTMLButtonElement[];
         this.init();
     }
-
-
 
     init(): void {
         // Check the attriubes to see if the form is ajax
@@ -24,7 +26,6 @@ export class Form implements IForm {
         if (this.isAjax) {
             this.setupAjax();
         }
-
     }
 
     setupAjax(): void {

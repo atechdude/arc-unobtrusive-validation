@@ -6,8 +6,10 @@ import { IDecoratedLogger, ILoggerService, IOptions } from "../interfaces";
 export class DebuggingLogger implements IDecoratedLogger {
     private readonly loggerProxy: ILoggerService;
 
-    constructor(@inject(TYPES.Logger) private readonly _logger: ILoggerService,
-        @inject(TYPES.Options) private readonly _options:IOptions) {
+    constructor(
+        @inject(TYPES.Logger) private readonly _logger: ILoggerService,
+        @inject(TYPES.Options) private readonly _options: IOptions
+    ) {
         const handler: ProxyHandler<ILoggerService> = {
             get: (target, propertyKey: string | symbol) => {
                 if (typeof propertyKey === "symbol") {
@@ -19,11 +21,13 @@ export class DebuggingLogger implements IDecoratedLogger {
 
                 if (typeof originalProperty === "function") {
                     // Asserting the function type more clearly for TypeScript
-                    const originalMethod = originalProperty as (...args: any[]) => any;
+                    const originalMethod = originalProperty as (
+                        ...args: any[]
+                    ) => any;
 
                     // If 'info' method, and debug is true, we want to intercept and change its behavior.
                     if (propertyKey === "info" && !this._options.debug) {
-                        return (...args: any[]): void => { };
+                        return (...args: any[]): void => {};
                     }
 
                     // For methods other than 'info' or if debug is true, we keep the original behavior.

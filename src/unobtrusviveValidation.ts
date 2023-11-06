@@ -19,14 +19,17 @@ export default class UnobtrusiveValidation {
     constructor(options: Partial<IOptions>) {
         this._options = { ...UnobtrusiveValidation.defaultOptions, ...options };
         if (this._options.autoInit !== false) {
-            this.init().catch(err => console.error("Initialization failed", err));
+            this.init().catch((err) =>
+                console.error("Initialization failed", err)
+            );
         }
     }
 
-    async init(force=false): Promise<void> {
-
+    async init(force = false): Promise<void> {
         if (this._initialized && !force) {
-            this._logger?.getLogger().info("UnobtrusiveValidation already initialized, skipping...");
+            this._logger
+                ?.getLogger()
+                .info("UnobtrusiveValidation already initialized, skipping...");
             return;
         }
         // ...existing initialization logic...
@@ -44,8 +47,6 @@ export default class UnobtrusiveValidation {
         // Get the logger from the container
         this._logger = container.get<IDecoratedLogger>(TYPES.DebuggingLogger);
 
-
-
         // Get the initializer from the container
         this._initializer = container.get<IInitializer>(TYPES.Initializer);
 
@@ -56,9 +57,10 @@ export default class UnobtrusiveValidation {
     }
 
     static getInstance(options: Partial<IOptions> = {}): UnobtrusiveValidation {
-        const effectiveOptions = Object.keys(options).length === 0
-            ? UnobtrusiveValidation.defaultOptions
-            : { ...UnobtrusiveValidation.defaultOptions, ...options };
+        const effectiveOptions =
+            Object.keys(options).length === 0
+                ? UnobtrusiveValidation.defaultOptions
+                : { ...UnobtrusiveValidation.defaultOptions, ...options };
 
         if (!this._currentInstance) {
             this._currentInstance = new UnobtrusiveValidation(effectiveOptions);
@@ -73,7 +75,9 @@ export default class UnobtrusiveValidation {
     }
     configure(options: Partial<IOptions>): void {
         // First, check if options actually need updating to prevent unnecessary re-initialization.
-        const optionsChanged = Object.keys(options).some(key => this._options[key] !== options[key]);
+        const optionsChanged = Object.keys(options).some(
+            (key) => this._options[key] !== options[key]
+        );
         if (!optionsChanged) {
             return; // No changes, so no need to re-initialize.
         }
@@ -85,10 +89,14 @@ export default class UnobtrusiveValidation {
         if (options.autoInit !== undefined) {
             if (options.autoInit) {
                 // Call the init method to re-initialize.
-                this.init().catch(err => console.error("Re-initialization failed", err));
+                this.init().catch((err) =>
+                    console.error("Re-initialization failed", err)
+                );
             } else {
                 // Handle the case where autoInit is false, such as cleaning up resources.
-                this.deinit().catch(err => console.error("De-initialization failed", err));
+                this.deinit().catch((err) =>
+                    console.error("De-initialization failed", err)
+                );
             }
         }
 
@@ -99,7 +107,3 @@ export default class UnobtrusiveValidation {
         // Nothing to do here for now
     }
 }
-
-
-
-

@@ -2,15 +2,15 @@
     private readonly value?: A;
     private readonly error?: Error;
 
-    get isSuccess (): boolean {
+    get isSuccess(): boolean {
         return this.error === undefined;
     }
 
-    get isFaulted (): boolean {
+    get isFaulted(): boolean {
         return this.error !== undefined;
     }
 
-    constructor (valueOrError: A | Error) {
+    constructor(valueOrError: A | Error) {
         if (valueOrError instanceof Error) {
             this.error = valueOrError;
         } else {
@@ -18,25 +18,25 @@
         }
     }
 
-    ifFail (defaultValue: A): A {
+    ifFail(defaultValue: A): A {
         return this.isFaulted ? defaultValue : this.value!;
     }
 
-    ifFailWithFunction (func: (err: Error) => A): A {
+    ifFailWithFunction(func: (err: Error) => A): A {
         return this.isFaulted ? func(this.error!) : this.value!;
     }
 
-    ifSucc (func: (val: A) => void): void {
+    ifSucc(func: (val: A) => void): void {
         if (this.isSuccess) {
             func(this.value!);
         }
     }
 
-    match<R> (succ: (val: A) => R, fail: (err: Error) => R): R {
+    match<R>(succ: (val: A) => R, fail: (err: Error) => R): R {
         return this.isFaulted ? fail(this.error!) : succ(this.value!);
     }
 
-    map<B> (func: (val: A) => B): Result<B> {
+    map<B>(func: (val: A) => B): Result<B> {
         if (this.isSuccess) {
             try {
                 const newValue = func(this.value!);
@@ -54,7 +54,7 @@
         return new Result<B>(this.error!);
     }
 
-    async mapAsync<B> (func: (val: A) => Promise<B>): Promise<Result<B>> {
+    async mapAsync<B>(func: (val: A) => Promise<B>): Promise<Result<B>> {
         if (this.isSuccess) {
             try {
                 const newValue = await func(this.value!);
@@ -72,7 +72,7 @@
         return new Result<B>(this.error!);
     }
 
-    equals (other: Result<A>): boolean {
+    equals(other: Result<A>): boolean {
         if (this.isFaulted && other.isFaulted) {
             return this.error!.message === other.error!.message;
         }
@@ -82,23 +82,23 @@
         return false;
     }
 
-    toString (): string {
-        return this.isFaulted ? `(Error: ${this.error!.message})` : `(Value: ${this.value})`;
+    toString(): string {
+        return this.isFaulted
+            ? `(Error: ${this.error!.message})`
+            : `(Value: ${this.value})`;
     }
 
-
-    static handleError<T> (result: Result<T>): Error | undefined {
+    static handleError<T>(result: Result<T>): Error | undefined {
         if (!result.isSuccess) {
             return result.error;
         }
         return undefined;
     }
 
-    static handleSuccess<T> (result: Result<T>): T | undefined {
+    static handleSuccess<T>(result: Result<T>): T | undefined {
         if (result.isSuccess) {
             return result.value;
         }
         return undefined;
     }
-
 }

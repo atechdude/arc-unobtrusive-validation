@@ -11,9 +11,7 @@ import { IDebouncer } from "../interfaces";
  */
 @injectable()
 export class Debouncer implements IDebouncer {
-    constructor()
-    {
-    }
+    constructor() {}
     private timeoutId?: ReturnType<typeof setTimeout>;
     /**
      * Debounces the provided function.
@@ -26,7 +24,10 @@ export class Debouncer implements IDebouncer {
      * @param {T} func - The function to be debounced.
      * @param {number} waitMilliseconds - The number of milliseconds to wait before calling the function.
      */
-    debounce<T extends (...args: any[]) => void>(func: T, waitMilliseconds: number): void {
+    debounce<T extends (...args: any[]) => void>(
+        func: T,
+        waitMilliseconds: number
+    ): void {
         // Clear the existing timeout, if there is one
         if (this.timeoutId !== undefined) {
             clearTimeout(this.timeoutId);
@@ -48,8 +49,3 @@ export class Debouncer implements IDebouncer {
         clearTimeout(this.timeoutId);
     }
 }
-
-
-
-
-

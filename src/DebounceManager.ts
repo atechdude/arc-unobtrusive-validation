@@ -7,7 +7,10 @@ import { TYPES } from "./di/container-types";
 export class DebouncerManager implements IDebouncerManager {
     private debouncers: { [key: string]: Debouncer } = {};
 
-    constructor(@inject(TYPES.DebouncerFactory) private readonly _debounceFactory: IDebouncerFactory) {
+    constructor(
+        @inject(TYPES.DebouncerFactory)
+        private readonly _debounceFactory: IDebouncerFactory
+    ) {
         console.log("DebouncerManager constructor");
     }
 
@@ -26,14 +29,16 @@ export class DebouncerManager implements IDebouncerManager {
         }
     }
     clearDebouncersForControls(controlNames: string[]): void {
-        controlNames.forEach(controlName => {
-            if (Object.prototype.hasOwnProperty.call(this.debouncers, controlName)) {
+        controlNames.forEach((controlName) => {
+            if (
+                Object.prototype.hasOwnProperty.call(
+                    this.debouncers,
+                    controlName
+                )
+            ) {
                 this.debouncers[controlName].cancel();
                 delete this.debouncers[controlName];
             }
         });
     }
-
-
-
 }

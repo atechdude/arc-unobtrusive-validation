@@ -10,21 +10,23 @@ export interface IOptions {
     autoInit?: boolean;
 }
 
-
-export interface ILoggerService extends log.Logger {
-
-}
+export interface ILoggerService extends log.Logger {}
 export interface IDecoratedLogger {
-    getLogger: () => ILoggerService
+    getLogger: () => ILoggerService;
 }
 export interface IInitializer {
-    init(): Promise<void>
+    init(): Promise<void>;
 }
 
-
 export interface IEventEmitter<TEvents> {
-    on<K extends keyof TEvents>(event: K, listener: (data: TEvents[K]) => void): void;
-    off<K extends keyof TEvents>(event: K, listener: (data: TEvents[K]) => void): void;
+    on<K extends keyof TEvents>(
+        event: K,
+        listener: (data: TEvents[K]) => void
+    ): void;
+    off<K extends keyof TEvents>(
+        event: K,
+        listener: (data: TEvents[K]) => void
+    ): void;
     emit<K extends keyof TEvents>(event: K, data: TEvents[K]): void;
 }
 
@@ -39,23 +41,23 @@ export interface IEventData<T> {
 
 export interface IAppEvents {
     Initialized: {
-        source: string
+        source: string;
         message: string;
     };
     FormSubmitted: {
-        form: IForm
+        form: IForm;
     };
 }
 export interface IFormManager {
     init(): void;
     createForms(): void;
-    handleFormMutations(mutationsList: MutationRecord[]): void
+    handleFormMutations(mutationsList: MutationRecord[]): void;
     //setupForms(forms: IForm[]): Promise<void>;
     //configureListeners(form: IForm): Promise<void>;
     //removeListeners(formElement:HTMLFormElement): Promise<void>;
 }
 export interface IFormObserver {
-    startObserving(): void
+    startObserving(): void;
 }
 export interface IForm {
     formElement: HTMLFormElement;
@@ -64,21 +66,23 @@ export interface IForm {
     elements: HTMLFormControlsCollection;
     element: Element;
     buttons: HTMLButtonElement[];
-    init(): void
+    init(): void;
 }
 
 export interface IFormResult {
-    form: IForm | undefined
-    status: string
-    errorMessage: string
+    form: IForm | undefined;
+    status: string;
+    errorMessage: string;
 }
 
 export interface IFormFactory {
-    create(formElement: HTMLFormElement): Result<IForm>
+    create(formElement: HTMLFormElement): Result<IForm>;
 }
 
 export interface IValidationService {
-    validateControl(control: HTMLInputElement): Promise<Result<IValidationResult>>;
+    validateControl(
+        control: HTMLInputElement
+    ): Promise<Result<IValidationResult>>;
 }
 export interface IValidationRule<T> {
     priority: number;
@@ -90,37 +94,34 @@ export interface IValidator<T> {
     validate(value: T): boolean;
 }
 
-
-
 export interface IValidationResult {
-    control: HTMLInputElement
-    isValid: boolean
-    errorMessage: string
+    control: HTMLInputElement;
+    isValid: boolean;
+    errorMessage: string;
 }
-
-
-
-
 
 // State Management Interfaces
 export interface IStateManager {
     makeControlDirty(controlName: string): void;
     isControlDirty(controlName: string): boolean;
     clearControlDirtyState(controlName: string): void;
-    clearControlsDirtyState(controlNames: string[]): void
+    clearControlsDirtyState(controlNames: string[]): void;
 }
 // Debouncer Interfaces
 export interface IDebouncerFactory {
     create(): IDebouncer;
 }
 export interface IDebouncer {
-    debounce<T extends (...args: any[]) => void>(func: T, waitMilliseconds: number): void;
-    cancel(): void
+    debounce<T extends (...args: any[]) => void>(
+        func: T,
+        waitMilliseconds: number
+    ): void;
+    cancel(): void;
 }
 export interface IDebouncerManager {
     getDebouncerForControl(controlName: string): Debouncer;
     clearDebouncersForControl(controlName: string): void;
-    clearDebouncersForControls(controlNames: string[]): void
+    clearDebouncersForControls(controlNames: string[]): void;
 }
 // Event Service Interfaces
 export interface IEventService {
@@ -132,72 +133,65 @@ export interface IEventService {
     createInputHandler(debounceTime: number): EventListener;
     createBlurHandler(): EventListener;
     focusEventHandler(event: Event): void;
-    debouncedValidate(input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement, debounceTime: number): void;
+    debouncedValidate(
+        input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
+        debounceTime: number
+    ): void;
     cleanupResourcesForForm(formElement: HTMLFormElement): Promise<void>;
 }
 
 // Since `addListeners` and `removeListeners` are private, they are not included in the interface.
 
-
 /**
  * Represents a generic collection object that allows observers to be
  * added and removed, and provides notifications to its observers
  * when changes are made to the collection.
- *
  * @template T The type of items that this collection holds.
  */
 export interface IObservableCollection<T> {
     /**
-      * Adds an observer to the collection.
-      *
-      * @param {IObserver<T>} observer - The observer to be added.
-      * @returns {boolean} Returns true if the observer is successfully added.
-      */
-    addObserver: (observer: IObserver<T>) => boolean
+     * Adds an observer to the collection.
+     * @param {IObserver<T>} observer - The observer to be added.
+     * @returns {boolean} Returns true if the observer is successfully added.
+     */
+    addObserver: (observer: IObserver<T>) => boolean;
     /**
-       * Removes an observer from the collection.
-       *
-       * @param {IObserver<T>} observer - The observer to be removed.
-       * @returns {boolean} Returns true if the observer is found and removed; otherwise, false.
-       */
-    removeObserver: (observer: IObserver<T>) => boolean
+     * Removes an observer from the collection.
+     * @param {IObserver<T>} observer - The observer to be removed.
+     * @returns {boolean} Returns true if the observer is found and removed; otherwise, false.
+     */
+    removeObserver: (observer: IObserver<T>) => boolean;
     /**
-       * Adds an item to the collection.
-       *
-       * @param {T} item - The item to be added to the collection.
-       */
-    addItem: (item: T) => void
+     * Adds an item to the collection.
+     * @param {T} item - The item to be added to the collection.
+     */
+    addItem: (item: T) => void;
     /**
-      * Adds multiple items to the collection.
-      *
-      * @param {T[]} items - An array of items to be added to the collection.
-      */
-    addItems: (items: T[]) => void
+     * Adds multiple items to the collection.
+     * @param {T[]} items - An array of items to be added to the collection.
+     */
+    addItems: (items: T[]) => void;
     /**
-      * Finds an item in the collection that satisfies the provided function.
-      *
-      * @param {(item: T) => boolean} conditionFunc - The function that new items must satisfy.
-      * @returns {T | undefined} The first item in the collection that satisfies the provided function; otherwise, undefined.
-      */
-    findItem: (conditionFunc: (item: T) => boolean) => T | undefined
+     * Finds an item in the collection that satisfies the provided function.
+     * @param {(item: T) => boolean} conditionFunc - The function that new items must satisfy.
+     * @returns {T | undefined} The first item in the collection that satisfies the provided function; otherwise, undefined.
+     */
+    findItem: (conditionFunc: (item: T) => boolean) => T | undefined;
     /**
-       * Removes an item from the collection.
-       *
-       * @param {T} item - The item to be removed from the collection.
-       */
-    removeItem: (item: T) => void
+     * Removes an item from the collection.
+     * @param {T} item - The item to be removed from the collection.
+     */
+    removeItem: (item: T) => void;
     /**
-      * Removes multiple items from the collection.
-      *
-      * @param {T[]} itemsToRemove - An array of items to be removed from the collection.
-      */
-    removeItems: (itemsToRemove: T[]) => void
+     * Removes multiple items from the collection.
+     * @param {T[]} itemsToRemove - An array of items to be removed from the collection.
+     */
+    removeItems: (itemsToRemove: T[]) => void;
     /**
-       * Retrieves all items from the collection.
-       *
-       * @returns {T[]} An array containing all items in the collection.
-       */
-    getItems: () => T[]
+     * Retrieves all items from the collection.
+     * @returns {T[]} An array containing all items in the collection.
+     */
+    getItems: () => T[];
 }
 
 // Observable Collection Interfaces
@@ -206,51 +200,43 @@ export interface IObservableCollection<T> {
  *
  * This interface is utilized to notify observers about changes
  * in the ObservableCollection, primarily about additions and removals.
- *
  * @template T The type of item being added or removed.
  */
 export interface IChange<T> {
     /**
-       * Represents the type of change that occurred.
-       *
-       * @type {'add' | 'remove'}
-       */
-    type: "add" | "remove"
+     * Represents the type of change that occurred.
+     * @type {'add' | 'remove'}
+     */
+    type: "add" | "remove";
     /**
-      * The item that was added or removed.
-      *
-      * @type {T}
-      */
-    item: T
+     * The item that was added or removed.
+     * @type {T}
+     */
+    item: T;
 }
 
 /**
-* Represents a bulk change (either addition or removal) in the collection.
-*
-* @template T The type of items affected by the bulk change.
-* @property {('bulk-add' | 'bulk-remove')} type - The type of bulk operation. It can either be 'bulk-add' for additions or 'bulk-remove' for removals.
-* @property {T[]} items - An array of items that are either added or removed from the collection during the bulk operation.
-*/
+ * Represents a bulk change (either addition or removal) in the collection.
+ * @template T The type of items affected by the bulk change.
+ * @property {('bulk-add' | 'bulk-remove')} type - The type of bulk operation. It can either be 'bulk-add' for additions or 'bulk-remove' for removals.
+ * @property {T[]} items - An array of items that are either added or removed from the collection during the bulk operation.
+ */
 export interface IBulkChange<T> {
-    type: "bulk-add" | "bulk-remove"
-    items: T[]
+    type: "bulk-add" | "bulk-remove";
+    items: T[];
 }
 
 /**
  * Represents an observer in the Observer Pattern.
  *
  * This observer is notified of all changes in the observed subject.
- *
  * @template T The type of the item within the change object.
  */
 export interface IObserver<T> {
     /**
-      * Notified when there is a change in the observed subject.
-      *
-      * @param {IChange<T>} change - The change object containing the type of change and the item involved.
-      */
+     * Notified when there is a change in the observed subject.
+     * @param {IChange<T>} change - The change object containing the type of change and the item involved.
+     */
     // notify: (change: IChange<T>) => void
-    notify: (change: IChange<T>) => void
+    notify: (change: IChange<T>) => void;
 }
-
-
