@@ -61,62 +61,77 @@ export class FormManager implements IFormManager {
     * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/MutationRecord} for details on `MutationRecord`.
     */
     handleFormMutations(mutationsList: MutationRecord[]): void {
-        for (const mutation of mutationsList) {
-            if (mutation.type === "childList") {
-                // Process direct forms
-                const directForms = Array.from(mutation.addedNodes)
-                    .filter((node): node is HTMLFormElement => node instanceof HTMLFormElement);
-                for (const form of directForms) {
-                    this.addForm(form);
-                }
+        try {
+            for (const mutation of mutationsList) {
+                if (mutation.type === "childList") {
+                    // Process direct forms
+                    const directForms = Array.from(mutation.addedNodes)
+                        .filter((node): node is HTMLFormElement => node instanceof HTMLFormElement);
+                    for (const form of directForms) {
+                        this.addForm(form);
+                    }
 
-                // Process nested forms
-                const nestedForms = Array.from(mutation.addedNodes)
-                    .filter((node): node is HTMLElement => node instanceof HTMLElement)
-                    .flatMap(node => Array.from(node.querySelectorAll("form")));
-                for (const form of nestedForms) {
-                    this.addForm(form);
+                    // Process nested forms
+                    const nestedForms = Array.from(mutation.addedNodes)
+                        .filter((node): node is HTMLElement => node instanceof HTMLElement)
+                        .flatMap(node => Array.from(node.querySelectorAll("form")));
+                    for (const form of nestedForms) {
+                        this.addForm(form);
+                    }
                 }
+            }
+        } catch (error) {
+            // If error is an instance of Error, log its message; otherwise, log the error directly
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this._logger.getLogger().error(`Error in handleFormMutations: ${errorMessage}`);
+        }
+    }
+
+    /**
+    * Attempts to add a form to the forms collection.
+    * If the form is successfully created and added to the collection,
+    * a "formAdded" event is emitted.
+    *
+    * @param {HTMLFormElement} formElement - The HTML form element to be added to the collection.
+    * @throws Will log an error to the injected logger if the form creation fails or an unexpected error occurs.
+    */
+    addForm(formElement: HTMLFormElement): void {
+        try {
+            const formResults = this._formFactory.create(formElement);
+            if (!formResults.isSuccess) {
+                const error = Result.handleError(formResults);
+                this._logger.getLogger().error(`FormManager: addForm: ${error}`);
+                return;
+            }
+
+            const formResult = Result.handleSuccess(formResults) as IForm;
+            if (formResult === undefined) {
+                this._logger.getLogger().error("FormManager: addForm: formResult is undefined");
+                return;
+            }
+
+            this._formsCollection.addItem(formResult);
+            this._eventEmitter.emit("formAdded", formResult);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this._logger.getLogger().error(`FormManager: addForm: Unexpected error: ${errorMessage}`);
+        }
+    }
+
+    createForms(): void {
+        const forms = document.querySelectorAll("form");
+        const formsArray = Array.from(forms);
+
+        for (const formElement of formsArray) {
+            try {
+                this.addForm(formElement as HTMLFormElement);
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                this._logger.getLogger().error(`FormManager: createForms: Error when adding form: ${errorMessage}`);
+                // Optionally continue to next form or handle the error accordingly
             }
         }
     }
-    /**
-    * Adds a form to the observable collection and emits an event if the form is successfully added.
-    * It attempts to create a form object using the form factory, handles the case where the form creation
-    * is unsuccessful, and refreshes the collection if the form already exists.
-    *
-    * @param {HTMLFormElement} formElement - The HTML form element to be added to the collection.
-    * @fires EventService#formAdded - This event is emitted when a form is successfully added.
-    */
-    addForm(formElement: HTMLFormElement): void {
-        const formResults = this._formFactory.create(formElement);
-        if (!formResults.isSuccess) {
-            const error = Result.handleError(formResults);
 
-            this._logger.getLogger().error(`FormManager: addform: ${error}`);
-            return;
-        }
-        const formResult = Result.handleSuccess(formResults) as IForm;
-        if (formResult === undefined) {
-            this._logger.getLogger().error("FormManager: addform: formResult is undefined");
-
-
-        }
-        this._formsCollection.addItem(formResult);
-        console.log(this._formsCollection);
-    }
-    /**
-     * Creates form instances from all existing 'form' elements in the document
-     * when the FormManager is initialized.
-     */
-    createForms(): void {
-        const forms = document.querySelectorAll("form");
-        // Convert the NodeList to an array
-        const formsArray = Array.from(forms);
-        // For Loop for formsArray
-        for (const formElement of formsArray) {
-            this.addForm(formElement as HTMLFormElement);
-        }
-    }
 }
 
