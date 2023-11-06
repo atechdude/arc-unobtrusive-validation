@@ -9,6 +9,7 @@ const TYPES = {
     Initializer: Symbol.for("IInitializer"),
     DebouncerFactory: Symbol.for("IDebouncerFactory"),
     FormManager: Symbol.for("IFormManager"),
+    FormObserver: Symbol.for("IFormObserver"),
     FormFactory: Symbol.for("IFormFactory"),
     ObservableFormsCollection: Symbol.for("IObservableCollection"),
     ValidationService: Symbol.for("IValidationService")

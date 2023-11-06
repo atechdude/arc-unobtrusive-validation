@@ -10,6 +10,7 @@ import {
     IForm,
     IFormFactory,
     IFormManager,
+    IFormObserver,
     IInitializer,
     ILoggerService,
     IObservableCollection,
@@ -27,10 +28,12 @@ import { FormFactory } from "../FormFactory";
 import { ObservableCollection } from "../ObservableCollection";
 import { DebouncerFactory } from "../DebouncerFactory";
 import { FormManager } from "../FormManager";
+
 import { EventService } from "../services/EventService";
 import { StateManager } from "../StateManager";
 import { DebouncerManager } from "../DebounceManager";
 import { ValidationService } from "../services/ValidationService";
+import { FormObserver } from "../FormObserver";
 
 
 
@@ -47,6 +50,7 @@ container.bind<IStateManager>(TYPES.StateManager).to(StateManager).inSingletonSc
 container.bind<IDecoratedLogger>(TYPES.DebuggingLogger).to(DebuggingLogger).inRequestScope();
 container.bind<IInitializer>(TYPES.Initializer).to(Initializer).inSingletonScope();
 container.bind<IFormManager>(TYPES.FormManager).to(FormManager).inSingletonScope();
+container.bind<IFormObserver>(TYPES.FormObserver).to(FormObserver).inSingletonScope();
 container.bind<IFormFactory>(TYPES.FormFactory).to(FormFactory).inSingletonScope();
 
 container.bind<IObservableCollection<IForm>>(TYPES.ObservableFormsCollection).to(ObservableCollection<IForm>).inSingletonScope();

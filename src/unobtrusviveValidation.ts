@@ -11,7 +11,7 @@ export default class UnobtrusiveValidation {
     private _initialized: boolean = false;
 
     private static defaultOptions: IOptions = {
-        debug: false,
+        debug: true,
         logLevel: "info",
         autoInit: true
     };

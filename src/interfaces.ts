@@ -47,11 +47,15 @@ export interface IAppEvents {
     };
 }
 export interface IFormManager {
-    init(): Promise<void>;
+    init(): void;
     createForms(): void;
+    handleFormMutations(mutationsList: MutationRecord[]): void
     //setupForms(forms: IForm[]): Promise<void>;
     //configureListeners(form: IForm): Promise<void>;
     //removeListeners(formElement:HTMLFormElement): Promise<void>;
+}
+export interface IFormObserver {
+    startObserving(): void
 }
 export interface IForm {
     formElement: HTMLFormElement;

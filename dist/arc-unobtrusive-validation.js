@@ -5260,40 +5260,27 @@ let FormManager = class FormManager {
      * Initializes form management by creating form instances from existing DOM
      * and setting up a mutation observer for new forms added to the DOM.
      */
-    async init() {
+    init() {
         this.createForms();
-        this.observeDOMForForms();
     }
-    /**
-     * Sets up a mutation observer to detect when form elements are added to the DOM
-     * and adds those forms to the forms collection.
-     */
-    observeDOMForForms() {
-        // If the observer already exists, disconnect it
-        if (this.mutationObserver) {
-            this.mutationObserver.disconnect();
-        }
-        this.mutationObserver = new MutationObserver((mutationsList) => {
-            for (const mutation of mutationsList) {
-                if (mutation.type === "childList") {
-                    // Process direct forms
-                    const directForms = Array.from(mutation.addedNodes)
-                        .filter((node) => node instanceof HTMLFormElement);
-                    for (const form of directForms) {
-                        this.addform(form);
-                    }
-                    // Process nested forms
-                    const nestedForms = Array.from(mutation.addedNodes)
-                        .filter((node) => node instanceof HTMLElement)
-                        .flatMap(node => Array.from(node.querySelectorAll("form")));
-                    for (const form of nestedForms) {
-                        this.addform(form);
-                    }
+    handleFormMutations(mutationsList) {
+        for (const mutation of mutationsList) {
+            if (mutation.type === "childList") {
+                // Process direct forms
+                const directForms = Array.from(mutation.addedNodes)
+                    .filter((node) => node instanceof HTMLFormElement);
+                for (const form of directForms) {
+                    this.addForm(form);
+                }
+                // Process nested forms
+                const nestedForms = Array.from(mutation.addedNodes)
+                    .filter((node) => node instanceof HTMLElement)
+                    .flatMap(node => Array.from(node.querySelectorAll("form")));
+                for (const form of nestedForms) {
+                    this.addForm(form);
                 }
             }
-        });
-        // Only one observer instance should be running
-        this.mutationObserver.observe(document.body, { childList: true, subtree: true });
+        }
     }
     /**
     * Adds a form to the observable collection and emits an event if the form is successfully added.
@@ -5303,7 +5290,7 @@ let FormManager = class FormManager {
     * @param {HTMLFormElement} formElement - The HTML form element to be added to the collection.
     * @fires EventService#formAdded - This event is emitted when a form is successfully added.
     */
-    addform(formElement) {
+    addForm(formElement) {
         const formResults = this._formFactory.create(formElement);
         if (!formResults.isSuccess) {
             const error = _Result__WEBPACK_IMPORTED_MODULE_1__.Result.handleError(formResults);
@@ -5327,7 +5314,7 @@ let FormManager = class FormManager {
         const formsArray = Array.from(forms);
         // For Loop for formsArray
         for (const formElement of formsArray) {
-            this.addform(formElement);
+            this.addForm(formElement);
         }
     }
 };
@@ -5347,6 +5334,69 @@ FormManager = __decorate([
     __param(3, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebuggingLogger)),
     __metadata("design:paramtypes", [Object, Object, Object, Object])
 ], FormManager);
+
+
+
+/***/ }),
+
+/***/ "./src/FormObserver.ts":
+/*!*****************************!*\
+  !*** ./src/FormObserver.ts ***!
+  \*****************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   FormObserver: () => (/* binding */ FormObserver)
+/* harmony export */ });
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/inject.js");
+/* harmony import */ var _di_container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./di/container-types */ "./src/di/container-types.ts");
+var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (undefined && undefined.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (undefined && undefined.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+
+
+let FormObserver = class FormObserver {
+    _formManager;
+    _logger;
+    mutationObserver = null;
+    constructor(_formManager, _logger) {
+        this._formManager = _formManager;
+        this._logger = _logger;
+        _logger.getLogger().info("FormObserver: constructor");
+    }
+    startObserving() {
+        if (this.mutationObserver) {
+            this.mutationObserver.disconnect();
+        }
+        this.mutationObserver = new MutationObserver((mutationsList) => {
+            // Call FormManager methods to handle new forms
+            this._formManager.handleFormMutations(mutationsList);
+        });
+        this._logger.getLogger().info("FormObserver: Is Observing");
+        this.mutationObserver.observe(document.body, { childList: true, subtree: true });
+    }
+    stopObserving() {
+        this.mutationObserver?.disconnect();
+    }
+};
+FormObserver = __decorate([
+    (0,inversify__WEBPACK_IMPORTED_MODULE_1__.injectable)(),
+    __param(0, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormManager)),
+    __param(1, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebuggingLogger)),
+    __metadata("design:paramtypes", [Object, Object])
+], FormObserver);
 
 
 
@@ -5383,12 +5433,14 @@ var __param = (undefined && undefined.__param) || function (paramIndex, decorato
 let Initializer = class Initializer {
     _options;
     _formManager;
+    _formObserver;
     _eventService;
     _stateManager;
     _eventEmitter;
-    constructor(_options, _formManager, _eventService, _stateManager, _eventEmitter) {
+    constructor(_options, _formManager, _formObserver, _eventService, _stateManager, _eventEmitter) {
         this._options = _options;
         this._formManager = _formManager;
+        this._formObserver = _formObserver;
         this._eventService = _eventService;
         this._stateManager = _stateManager;
         this._eventEmitter = _eventEmitter;
@@ -5412,17 +5464,19 @@ let Initializer = class Initializer {
     }
     async onDOMLoaded() {
         // Your logic for when the DOM is loaded
-        await this._formManager.init();
+        this._formObserver.startObserving();
+        this._formManager.init();
     }
 };
 Initializer = __decorate([
     (0,inversify__WEBPACK_IMPORTED_MODULE_1__.injectable)(),
     __param(0, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.Options)),
     __param(1, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormManager)),
-    __param(2, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventService)),
-    __param(3, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.StateManager)),
-    __param(4, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventEmitter)),
-    __metadata("design:paramtypes", [Object, Object, Object, Object, Object])
+    __param(2, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormObserver)),
+    __param(3, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventService)),
+    __param(4, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.StateManager)),
+    __param(5, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventEmitter)),
+    __metadata("design:paramtypes", [Object, Object, Object, Object, Object, Object])
 ], Initializer);
 
 
@@ -5766,7 +5820,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   container: () => (/* binding */ container)
 /* harmony export */ });
-/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/container/container.js");
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/container/container.js");
 /* harmony import */ var _container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./container-types */ "./src/di/container-types.ts");
 /* harmony import */ var _logger_debuggingLogger__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../logger/debuggingLogger */ "./src/logger/debuggingLogger.ts");
 /* harmony import */ var _services_loggerService__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../services/loggerService */ "./src/services/loggerService.ts");
@@ -5780,6 +5834,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _StateManager__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../StateManager */ "./src/StateManager.ts");
 /* harmony import */ var _DebounceManager__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../DebounceManager */ "./src/DebounceManager.ts");
 /* harmony import */ var _services_ValidationService__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../services/ValidationService */ "./src/services/ValidationService.ts");
+/* harmony import */ var _FormObserver__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ../FormObserver */ "./src/FormObserver.ts");
 
 
 
@@ -5794,7 +5849,8 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-const container = new inversify__WEBPACK_IMPORTED_MODULE_13__.Container();
+
+const container = new inversify__WEBPACK_IMPORTED_MODULE_14__.Container();
 container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.Logger).to(_services_loggerService__WEBPACK_IMPORTED_MODULE_2__.LoggerService).inSingletonScope();
 container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventEmitter).to((_EventEmitter__WEBPACK_IMPORTED_MODULE_4__.EventEmitter)).inRequestScope();
 container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventService).to(_services_EventService__WEBPACK_IMPORTED_MODULE_9__.EventService).inSingletonScope;
@@ -5802,6 +5858,7 @@ container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.StateManager)
 container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebuggingLogger).to(_logger_debuggingLogger__WEBPACK_IMPORTED_MODULE_1__.DebuggingLogger).inRequestScope();
 container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.Initializer).to(_Initializer__WEBPACK_IMPORTED_MODULE_3__.Initializer).inSingletonScope();
 container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormManager).to(_FormManager__WEBPACK_IMPORTED_MODULE_8__.FormManager).inSingletonScope();
+container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormObserver).to(_FormObserver__WEBPACK_IMPORTED_MODULE_13__.FormObserver).inSingletonScope();
 container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormFactory).to(_FormFactory__WEBPACK_IMPORTED_MODULE_5__.FormFactory).inSingletonScope();
 container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ObservableFormsCollection).to((_ObservableCollection__WEBPACK_IMPORTED_MODULE_6__.ObservableCollection)).inSingletonScope();
 container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebouncerManager).to(_DebounceManager__WEBPACK_IMPORTED_MODULE_11__.DebouncerManager).inSingletonScope();
@@ -5834,6 +5891,7 @@ const TYPES = {
     Initializer: Symbol.for("IInitializer"),
     DebouncerFactory: Symbol.for("IDebouncerFactory"),
     FormManager: Symbol.for("IFormManager"),
+    FormObserver: Symbol.for("IFormObserver"),
     FormFactory: Symbol.for("IFormFactory"),
     ObservableFormsCollection: Symbol.for("IObservableCollection"),
     ValidationService: Symbol.for("IValidationService")
@@ -6422,7 +6480,7 @@ class UnobtrusiveValidation {
     _initializer;
     _initialized = false;
     static defaultOptions = {
-        debug: false,
+        debug: true,
         logLevel: "info",
         autoInit: true
     };
