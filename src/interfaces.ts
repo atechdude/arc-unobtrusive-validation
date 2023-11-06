@@ -50,9 +50,9 @@ export interface IAppEvents {
 export interface IFormManager {
     init(): Promise<void>;
     createForms(): void;
-    setupForms(forms: IForm[]): Promise<void>;
-    configureListeners(form: IForm): Promise<void>;
-    removeListeners(formElement:HTMLFormElement): Promise<void>;
+    //setupForms(forms: IForm[]): Promise<void>;
+    //configureListeners(form: IForm): Promise<void>;
+    //removeListeners(formElement:HTMLFormElement): Promise<void>;
 }
 export interface IForm {
     formElement: HTMLFormElement;
@@ -133,6 +133,23 @@ export interface IDebouncerManager {
     clearDebouncersForControl(controlName: string): void;
     clearDebouncersForControls(controlNames: string[]): void
 }
+// Event Service Interfaces
+export interface IEventService {
+    eventListenersMap: WeakMap<Element, Record<string, EventListener>>;
+    dirtyMap: { [key: string]: boolean };
+    debouncers: { [key: string]: Debouncer };
+    notify(change: IChange<IForm>): Promise<void>;
+    setupHandlers(form: IForm): void;
+    createInputHandler(debounceTime: number): EventListener;
+    createBlurHandler(): EventListener;
+    focusEventHandler(event: Event): void;
+    makeControlDirty(input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): void;
+    debouncedValidate(input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement, debounceTime: number): void;
+    cleanupResourcesForForm(formElement: HTMLFormElement): Promise<void>;
+}
+
+// Since `addListeners` and `removeListeners` are private, they are not included in the interface.
+
 
 /**
  * Represents a generic collection object that allows observers to be

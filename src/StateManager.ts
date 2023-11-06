@@ -23,10 +23,11 @@ export class StateManager implements IStateManager {
     }
     clearControlsDirtyState(controlNames: string[]): void {
         controlNames.forEach(controlName => {
-            if (this.dirtyMap[controlName]) {
+            if (Object.prototype.hasOwnProperty.call(this.dirtyMap, controlName)) {
                 this._logger.getLogger().info(`Clearing dirty state for control ${controlName}`);
                 delete this.dirtyMap[controlName];
             }
         });
     }
+
 }

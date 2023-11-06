@@ -25,12 +25,13 @@ export class DebouncerManager implements IDebouncerManager {
     }
     clearDebouncersForControls(controlNames: string[]): void {
         controlNames.forEach(controlName => {
-            const debouncer = this.debouncers[controlName];
-            if (debouncer) {
-                debouncer.cancel(); // Assuming the debouncer has a cancel method
+            if (Object.prototype.hasOwnProperty.call(this.debouncers, controlName)) {
+                this.debouncers[controlName].cancel();
                 delete this.debouncers[controlName];
             }
         });
     }
+
+
 
 }

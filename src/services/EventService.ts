@@ -1,11 +1,11 @@
 import { inject, injectable } from "inversify";
 import { TYPES } from "../di/container-types";
-import { IChange, IDebouncerFactory, IDebouncerManager, IDecoratedLogger, IForm, IObservableCollection, IStateManager, IValidationService } from "../interfaces";
+import { IChange, IDebouncerFactory, IDebouncerManager, IDecoratedLogger, IEventService, IForm, IObservableCollection, IStateManager, IValidationService } from "../interfaces";
 import { Debouncer } from "../util/Debouncer";
 @injectable()
 
 // TODO: Create Interface and setup container.
-export class EventService {
+export class EventService implements IEventService{
     eventListenersMap: WeakMap<Element, Record<string, EventListener>> = new WeakMap();
     dirtyMap: { [key: string]: boolean } = {};
     debouncers: { [key: string]: Debouncer } = {};
@@ -23,33 +23,36 @@ export class EventService {
 
     // Add Listeners When We Get a Notification of a New Form
     async notify(change: IChange<IForm>): Promise<void> {
-        // Return early if the change is not an addition or the item is not an HTMLFormElement.
-        if (!("item" in change) || change.type !== "add" || !(change.item instanceof HTMLFormElement)) {
+
+        const { type: changeType, item: form } = change;
+
+        if(changeType !== "add" || !form.formElement){
             return;
         }
-
-        // Now we are sure that we have an 'add' change and the item is an HTMLFormElement.
-        // Setup the event handlers for the form
-        this.setupHandlers(change.item);
-
-        // Cleanup any previous resources for the form, even though it's a new addition.
+        // Cleanup any previous resources for the form.
         // This might be required to handle re-adding a form that was removed without proper cleanup.
-        await this.cleanupResourcesForForm(change.item);
+        await this.cleanupResourcesForForm(form.formElement);
+
+        // Setup the handlers for the form
+        this.setupHandlers(form);
 
         // Add the listeners to the form.
         // Note: It might be a good idea to check if the form element has already listeners attached.
         // If listeners exist, you may not need to add them again or you might want to update them.
         const listeners = this.eventListenersMap.get(change.item.formElement);
         if (listeners) {
-            await this.addListeners(change.item, listeners);
+            await this.addListeners(form, listeners);
         }
     }
 
 
     setupHandlers(form: IForm): void {
-        // Loop over each controls in the form
+        // Loop over each control in the form
         const controls = Array.from(form.elements);
-        let listeners: Record<string, EventListener>;
+
+        // Initialize listeners outside the loop
+        const listeners: Record<string, EventListener> = {};
+
         controls.forEach((element) => {
             if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement) {
                 // Add the event handlers for the control
@@ -57,15 +60,17 @@ export class EventService {
                 const blurEventHandler = this.createBlurHandler();
                 const focusEventHandler = this.focusEventHandler;
 
-                listeners = {
-                    input: inputEventHandler as EventListener,
-                    focus: focusEventHandler as EventListener,
-                    blur: blurEventHandler as EventListener
-                };
-                this.eventListenersMap.set(form.formElement, listeners);
+                // Accumulate listeners instead of re-initializing them
+                listeners["input"] = inputEventHandler as EventListener;
+                listeners["focus"] = focusEventHandler as EventListener;
+                listeners["blur"] = blurEventHandler as EventListener;
             }
         });
+
+        // Set the accumulated listeners for the form element after the loop
+        this.eventListenersMap.set(form.formElement, listeners);
     }
+
 
     createInputHandler(debounceTime: number): EventListener {
         return (event: Event) => {

@@ -25,7 +25,7 @@ export class ValidationService implements IValidationService {
 
     async notify(change: IChange<IForm>): Promise<void> {
         if ("item" in change && change.type === "add") {
-            console.log(change.item);
+            //console.log(change.item);
             // Get all form controls from the form
             const controls = Array.from(change.item.elements);
             // Iterate over each control to apply validation
