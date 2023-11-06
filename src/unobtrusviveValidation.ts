@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { IDecoratedLogger, IInitializer, IOptions, IValidationRuleRegistry } from "./interfaces";
+import { IDecoratedLogger, IInitializer, IOptions } from "./interfaces";
 import { container } from "./di/container-config";
 import { TYPES } from "./di/container-types";
 
@@ -8,7 +8,6 @@ export default class UnobtrusiveValidation {
     private _options: IOptions;
     private _logger: IDecoratedLogger | undefined;
     private _initializer: IInitializer | undefined;
-    private _validationRuleRegistry: IValidationRuleRegistry | undefined;
     private _initialized: boolean = false;
 
     private static defaultOptions: IOptions = {
@@ -25,6 +24,7 @@ export default class UnobtrusiveValidation {
     }
 
     async init(force=false): Promise<void> {
+
         if (this._initialized && !force) {
             this._logger?.getLogger().info("UnobtrusiveValidation already initialized, skipping...");
             return;
@@ -39,11 +39,12 @@ export default class UnobtrusiveValidation {
         // Bind the options to the container
         container.bind<IOptions>(TYPES.Options).toConstantValue(this._options);
 
+        //const t = container.get<IEventService>(TYPES.EventService);
+
         // Get the logger from the container
         this._logger = container.get<IDecoratedLogger>(TYPES.DebuggingLogger);
 
-        // Get the validation rule registry from the container
-        this._validationRuleRegistry = container.get<IValidationRuleRegistry>(TYPES.ValidationRuleRegistry);
+
 
         // Get the initializer from the container
         this._initializer = container.get<IInitializer>(TYPES.Initializer);

@@ -1,14 +1,15 @@
 ﻿
 import { inject, injectable } from "inversify";
-import { IAppEvents, IEventEmitter, IFormManager, IInitializer, IOptions } from "./interfaces";
+import { IAppEvents, IEventEmitter, IEventService, IFormManager, IInitializer, IOptions, IStateManager } from "./interfaces";
 import { TYPES } from "./di/container-types";
 
 @injectable()
 export class Initializer implements IInitializer {
     constructor(
         @inject(TYPES.Options) private readonly _options: IOptions,
-
         @inject(TYPES.FormManager) private readonly _formManager: IFormManager,
+        @inject(TYPES.EventService) private readonly _eventService: IEventService,
+        @inject(TYPES.StateManager) private readonly _stateManager: IStateManager,
         @inject(TYPES.EventEmitter) private readonly _eventEmitter: IEventEmitter<IAppEvents>) {
     }
 

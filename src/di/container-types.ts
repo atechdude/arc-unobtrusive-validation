@@ -11,10 +11,6 @@ const TYPES = {
     FormManager: Symbol.for("IFormManager"),
     FormFactory: Symbol.for("IFormFactory"),
     ObservableFormsCollection: Symbol.for("IObservableCollection"),
-    ValidationService: Symbol.for("IValidationService"),
-    ValidationRuleRegistry: Symbol.for("IValidationRuleRegistry"),
-    RuleFactory: Symbol.for("IRuleFactory")
-
-
+    ValidationService: Symbol.for("IValidationService")
 };
 export { TYPES };

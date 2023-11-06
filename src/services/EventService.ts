@@ -17,13 +17,14 @@ export class EventService implements IEventService{
         @inject(TYPES.StateManager) private readonly _stateManager: IStateManager,
         @inject(TYPES.DebouncerManager) private readonly _debouncerManager: IDebouncerManager,
         @inject(TYPES.DebuggingLogger) private readonly _logger: IDecoratedLogger){
-
+        console.log("EventService constructor");
         this._observableFormsCollection.addObserver(this);
+
     }
 
     // Add Listeners When We Get a Notification of a New Form
     async notify(change: IChange<IForm>): Promise<void> {
-
+        console.log("EventService notify");
         const { type: changeType, item: form } = change;
 
         if(changeType !== "add" || !form.formElement){
@@ -75,45 +76,44 @@ export class EventService implements IEventService{
     createInputHandler(debounceTime: number): EventListener {
         return (event: Event) => {
             const control = event.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
-            this.makeControlDirty(control);
+            this._stateManager.makeControlDirty(control.name);
             this.debouncedValidate(control, debounceTime);
         };
     }
 
     createBlurHandler(): EventListener {
         return (event: Event) => {
-            // Use a type assertion to convince TypeScript that 'event' is a FocusEvent.
-            const focusEvent = event as FocusEvent;
-            const target = focusEvent.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
-            const relatedTarget = focusEvent.relatedTarget as HTMLElement;
+            // Immediately Invoked Function Expression (IIFE)
+            (async (event: Event) => {
+                const focusEvent = event as FocusEvent;
+                const target = focusEvent.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+                const relatedTarget = focusEvent.relatedTarget as HTMLElement;
 
-            // Check if the relatedTarget is focusable and warrants validation
-            if (relatedTarget && (relatedTarget.tagName === "INPUT" || relatedTarget.tagName === "SELECT" || relatedTarget.tagName === "TEXTAREA" || relatedTarget.isContentEditable)) {
-                // Perform actions for blurring towards a focusable element
-                this.makeControlDirty(target);
-                this._validationService.validateControl(target).catch(error => {
-                    this._logger.getLogger().error(error instanceof Error ? error : new Error("Error in blurEventHandler: " + error));
-                });
-            } else {
-                // This blur is to a non-focusable element sont call validateControl
-                return;
-            }
+                if (relatedTarget && (relatedTarget.tagName === "INPUT" || relatedTarget.tagName === "SELECT" || relatedTarget.tagName === "TEXTAREA" || relatedTarget.isContentEditable)) {
+                    this._stateManager.makeControlDirty(target.name);
+                    try {
+                        await this._validationService.validateControl(target as HTMLInputElement);
+                    } catch (error) {
+                        this._logger.getLogger().error(error instanceof Error ? error : new Error("Error in blurEventHandler: " + error));
+                    }
+                }
+            })(event).catch(e => {
+                // Handle any errors that occurred during initialization
+                this._logger.getLogger().error("Error in IIFE: " + e);
+            });
         };
     }
     // Non-debounced focus event handler ("Useful for adding some CSS stuff.")
     focusEventHandler(event: Event): void  {
 
     }
-    makeControlDirty (input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): void
-    {
-        this._stateManager.makeControlDirty(input.name);
-    }
+
 
     debouncedValidate(input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement, debounceTime: number): void {
         this._debouncerManager.getDebouncerForControl(input.name).debounce(async () => {
             try {
                 console.log(`Debouncing ${input.name}`);
-                await this._validationService.validateControl(input);
+                await this._validationService.validateControl(input as HTMLInputElement);
             } catch (error) {
                 this._logger.getLogger().error(error instanceof Error ? error : new Error(`Error in debouncedValidate for control ${input.name}: ${error}`));
             }

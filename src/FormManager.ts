@@ -14,25 +14,29 @@ import { Result } from "./Result";
 export class FormManager implements IFormManager {
     private mutationObserver: MutationObserver | null = null;
     /**
-     * Initializes a new instance of the FormManager class.
+     * Creates a new instance of FormManager.
      * @constructor
-     * @param {IObservableCollection<IForm>} _formsCollection - The collection to store observable forms.
-     * @param {IFormFactory} _formFactory - Factory for creating form instances.
-     * @param {IEventService} _eventService - Service for handling events.
-     * @param {IDecoratedLogger} _logger - Logger for logging messages.
+     * @param {IObservableCollection<IForm>} _formsCollection - The observable collection of forms.
+     * @param {IFormFactory} _formFactory - The factory for creating form objects.
+     * @param {IEventEmitter<any>} _eventEmitter - The event emitter for emitting form events.
+     * @param {IDecoratedLogger} _logger - The logger for logging form events.
      */
-    constructor(@inject(TYPES.ObservableFormsCollection) private readonly _formsCollection: IObservableCollection<IForm>,
+    constructor(
+        @inject(TYPES.ObservableFormsCollection) private readonly _formsCollection: IObservableCollection<IForm>,
         @inject(TYPES.FormFactory) private readonly _formFactory: IFormFactory,
         @inject(TYPES.EventEmitter) private readonly _eventEmitter: IEventEmitter<any>,
         @inject(TYPES.DebuggingLogger) private readonly _logger: IDecoratedLogger){
+        console.log("FormManager: constructor" );
     }
     /**
      * Initializes form management by creating form instances from existing DOM
      * and setting up a mutation observer for new forms added to the DOM.
      */
     async init(): Promise<void> {
+
         this.createForms();
         this.observeDOMForForms();
+
     }
     /**
      * Sets up a mutation observer to detect when form elements are added to the DOM
@@ -75,39 +79,21 @@ export class FormManager implements IFormManager {
     * @fires EventService#formAdded - This event is emitted when a form is successfully added.
     */
     addform(formElement: HTMLFormElement): void {
-        try {
-            // Attempt to create the form using the form factory
-            const formResults = this._formFactory.create(formElement);
-            if (!formResults.isSuccess) {
-                // Handle the failure case
-                const error = Result.handleError(formResults);
-                this._logger.getLogger().error(new Error(error?.message || "Unknown error creating form"));
-                return; // Skip this form and continue with the next one
-            }
+        const formResults = this._formFactory.create(formElement);
+        if(!formResults.isSuccess){
+            const error = Result.handleError(formResults);
 
-            // Get the form from the result
-            const form = Result.handleSuccess(formResults);
-
-            if (form) {
-                // Check if the form is already in the collection
-                const existingForm = this._formsCollection.findItem(f => f.formElement === form.formElement);
-                if (existingForm) {
-                    // If the form exists, remove it to refresh the collection
-                    this._formsCollection.removeItem(existingForm);
-                    this._logger.getLogger().info(`Form with id/name: ${formElement.id || formElement.name} has been refreshed in the collection.`);
-                }
-                // Add the new form to the observable collection
-                this._formsCollection.addItem(form);
-                // Emit an event to notify about the form addition
-                this._eventEmitter.emit("formAdded", form);
-            } else {
-                // Log an error if the form is null
-                this._logger.getLogger().error(new Error("Form creation returned a null result"));
-            }
-        } catch (error) {
-            // Log any unexpected errors
-            this._logger.getLogger().error(error instanceof Error ? error : new Error("An unexpected error occurred in addForm"));
+            this._logger.getLogger().error(`FormManager: addform: ${error}`);
+            return;
         }
+        const formResult = Result.handleSuccess(formResults) as IForm;
+        if(formResult === undefined){
+            this._logger.getLogger().error("FormManager: addform: formResult is undefined");
+
+
+        }
+        this._formsCollection.addItem(formResult);
+        console.log(this._formsCollection);
     }
     /**
      * Creates form instances from all existing 'form' elements in the document
@@ -115,14 +101,11 @@ export class FormManager implements IFormManager {
      */
     createForms(): void {
         const forms = document.querySelectorAll("form");
-
-        for (let i = 0; i < forms.length; i++) {
-            try {
-                this.addform(forms[i] as HTMLFormElement);
-            } catch (error) {
-            // Catch any other unexpected errors
-                this._logger.getLogger().error(error instanceof Error ? error : new Error("An unexpected error occurred"));
-            }
+        // Convert the NodeList to an array
+        const formsArray = Array.from(forms);
+        // For Loop for formsArray
+        for (const formElement of formsArray) {
+            this.addform(formElement as HTMLFormElement);
         }
     }
 }

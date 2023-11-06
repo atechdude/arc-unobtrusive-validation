@@ -5,7 +5,7 @@ import { IDecoratedLogger, IStateManager } from "./interfaces";
 export class StateManager implements IStateManager {
     private dirtyMap: { [key: string]: boolean } = {};
     constructor( @inject(TYPES.DebuggingLogger) private readonly _logger: IDecoratedLogger) {
-
+        console.log("StateManager constructor");
     }
     makeControlDirty(controlName: string): void {
         this.dirtyMap[controlName] = true;

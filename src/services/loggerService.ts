@@ -5,6 +5,7 @@ import { ILoggerService } from "../interfaces";
 @injectable()
 export class LoggerService implements ILoggerService {
     constructor () {
+        console.log("LoggerService constructor");
         log.setLevel(log.levels.INFO);
     }
 

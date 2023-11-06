@@ -1,12 +1,11 @@
 ﻿import log from "loglevel";
 import { Result } from "./Result";
-import { RuleConstructor } from "./Types";
 import { Debouncer } from "./util/Debouncer";
 
 export interface IOptions {
     debug: boolean;
     logLevel: string;
-    customRules?: IValidationRule[];
+
     [key: string]: any;
     autoInit?: boolean;
 }
@@ -74,22 +73,20 @@ export interface IFormFactory {
     create(formElement: HTMLFormElement): Result<IForm>
 }
 
-// New Validation Interfaces
-export interface IValidationRule {
-    type: string;
-    message: string;
-    priority: number;
+export interface IValidationService {
+    validateControl(control: HTMLInputElement): Promise<Result<IValidationResult>>;
 }
-export interface IValidator {
-    canHandle(rule: IValidationRule): boolean;
-    validate(value: string, rule: IValidationRule): boolean;
+export interface IValidationRule<T> {
+    priority: number;
+    errorMessage: string;
+    validator: IValidator<T>;
+}
+export interface IValidator<T> {
+    isValid: boolean;
+    validate(value: T): boolean;
 }
 
-export interface IValidationService {
-    init(validators: IValidator[]): void; // Initialization can now take an array of validators.
-    validateForm(form: IForm): void; // Validation of the entire form.
-    validateControl(input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): Promise<void>; // Individual control validation.
-}
+
 
 export interface IValidationResult {
     control: HTMLInputElement
@@ -97,21 +94,9 @@ export interface IValidationResult {
     errorMessage: string
 }
 
-export interface IRuleFactory {
-    registerRuleConstructor(type: string, constructor: RuleConstructor): void;
-    createRule(rule:IValidationRule): IValidationRule;
-}
 
-export interface IRuleService {
-    registerRule(rule:IValidationRule): void;
-    getSortedRules(): IValidationRule[];
-}
-export interface IValidationRuleRegistry {
-    validationAttribute: string;
-    addRule(rule: IValidationRule): void;
-    getRulesForControl(input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): IValidationRule[];
-    setValidationAttribute(attribute: string): void;
-}
+
+
 
 // State Management Interfaces
 export interface IStateManager {
@@ -143,7 +128,6 @@ export interface IEventService {
     createInputHandler(debounceTime: number): EventListener;
     createBlurHandler(): EventListener;
     focusEventHandler(event: Event): void;
-    makeControlDirty(input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): void;
     debouncedValidate(input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement, debounceTime: number): void;
     cleanupResourcesForForm(formElement: HTMLFormElement): Promise<void>;
 }

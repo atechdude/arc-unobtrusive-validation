@@ -1,5 +1,5 @@
 ﻿import { injectable } from "inversify";
-import { IOptions, IValidationRule } from "./interfaces";
+import { IOptions } from "./interfaces";
 @injectable()
 export class Options implements IOptions {
     debug: boolean;
@@ -8,6 +8,6 @@ export class Options implements IOptions {
         this.debug = false;
         this.logLevel = "info";
     }
-    customRules?: IValidationRule[] | undefined;
+
     autoInit: boolean = true;
 }

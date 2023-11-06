@@ -4958,6 +4958,7 @@ let DebouncerManager = class DebouncerManager {
     debouncers = {};
     constructor(_debounceFactory) {
         this._debounceFactory = _debounceFactory;
+        console.log("DebouncerManager constructor");
     }
     getDebouncerForControl(controlName) {
         if (!this.debouncers[controlName]) {
@@ -5010,6 +5011,9 @@ var __decorate = (undefined && undefined.__decorate) || function (decorators, ta
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __metadata = (undefined && undefined.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
 
 
 /**
@@ -5023,6 +5027,9 @@ var __decorate = (undefined && undefined.__decorate) || function (decorators, ta
  * @see {@link IDebouncerFactory} for interface documentation.
  */
 let DebouncerFactory = class DebouncerFactory {
+    constructor() {
+        console.log("DebouncerFactory constructor");
+    }
     /**
      * Creates a new instance of `Debouncer`.
      *
@@ -5037,7 +5044,8 @@ let DebouncerFactory = class DebouncerFactory {
     }
 };
 DebouncerFactory = __decorate([
-    (0,inversify__WEBPACK_IMPORTED_MODULE_1__.injectable)()
+    (0,inversify__WEBPACK_IMPORTED_MODULE_1__.injectable)(),
+    __metadata("design:paramtypes", [])
 ], DebouncerFactory);
 
 
@@ -5062,11 +5070,15 @@ var __decorate = (undefined && undefined.__decorate) || function (decorators, ta
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __metadata = (undefined && undefined.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
 
-// Define a type that describes the events and the structure of data they pass.
-// EventListener now strictly expects data that conforms to the structure described in the EventMap.
 let EventEmitter = class EventEmitter {
     listeners = {};
+    constructor() {
+        console.log("EventEmitter constructor");
+    }
     on(event, listener) {
         if (!this.listeners[event]) {
             this.listeners[event] = [];
@@ -5089,7 +5101,8 @@ let EventEmitter = class EventEmitter {
     }
 };
 EventEmitter = __decorate([
-    (0,inversify__WEBPACK_IMPORTED_MODULE_0__.injectable)()
+    (0,inversify__WEBPACK_IMPORTED_MODULE_0__.injectable)(),
+    __metadata("design:paramtypes", [])
 ], EventEmitter);
 
 
@@ -5225,19 +5238,36 @@ var __param = (undefined && undefined.__param) || function (paramIndex, decorato
 let FormManager = class FormManager {
     _formsCollection;
     _formFactory;
-    _eventService;
+    _eventEmitter;
     _logger;
     mutationObserver = null;
-    constructor(_formsCollection, _formFactory, _eventService, _logger) {
+    /**
+     * Creates a new instance of FormManager.
+     * @constructor
+     * @param {IObservableCollection<IForm>} _formsCollection - The observable collection of forms.
+     * @param {IFormFactory} _formFactory - The factory for creating form objects.
+     * @param {IEventEmitter<any>} _eventEmitter - The event emitter for emitting form events.
+     * @param {IDecoratedLogger} _logger - The logger for logging form events.
+     */
+    constructor(_formsCollection, _formFactory, _eventEmitter, _logger) {
         this._formsCollection = _formsCollection;
         this._formFactory = _formFactory;
-        this._eventService = _eventService;
+        this._eventEmitter = _eventEmitter;
         this._logger = _logger;
+        console.log("FormManager: constructor");
     }
+    /**
+     * Initializes form management by creating form instances from existing DOM
+     * and setting up a mutation observer for new forms added to the DOM.
+     */
     async init() {
         this.createForms();
         this.observeDOMForForms();
     }
+    /**
+     * Sets up a mutation observer to detect when form elements are added to the DOM
+     * and adds those forms to the forms collection.
+     */
     observeDOMForForms() {
         // If the observer already exists, disconnect it
         if (this.mutationObserver) {
@@ -5265,49 +5295,55 @@ let FormManager = class FormManager {
         // Only one observer instance should be running
         this.mutationObserver.observe(document.body, { childList: true, subtree: true });
     }
+    /**
+    * Adds a form to the observable collection and emits an event if the form is successfully added.
+    * It attempts to create a form object using the form factory, handles the case where the form creation
+    * is unsuccessful, and refreshes the collection if the form already exists.
+    *
+    * @param {HTMLFormElement} formElement - The HTML form element to be added to the collection.
+    * @fires EventService#formAdded - This event is emitted when a form is successfully added.
+    */
     addform(formElement) {
-        // Add the form to the observable collection if it isn't already there
         const formResults = this._formFactory.create(formElement);
         if (!formResults.isSuccess) {
-            // Handle the failure case
             const error = _Result__WEBPACK_IMPORTED_MODULE_1__.Result.handleError(formResults);
-            this._logger.getLogger().error(new Error(error?.message || "Unknown error creating form"));
-            return; // Skip this form and continue with the next one
+            this._logger.getLogger().error(`FormManager: addform: ${error}`);
+            return;
         }
-        // Get the form from the result
-        const form = _Result__WEBPACK_IMPORTED_MODULE_1__.Result.handleSuccess(formResults);
-        if (form) {
-            // Check if the form is already in the collection
-            const existingForm = this._formsCollection.findItem(f => f.formElement === form.formElement);
-            if (existingForm) {
-                this._formsCollection.removeItem(existingForm);
-                this._logger.getLogger().info(`Form with id/name: ${formElement.id || formElement.name} has been refreshed in the collection.`);
-            }
-            // Add the new form to the observable collection
-            this._formsCollection.addItem(form);
+        const formResult = _Result__WEBPACK_IMPORTED_MODULE_1__.Result.handleSuccess(formResults);
+        if (formResult === undefined) {
+            this._logger.getLogger().error("FormManager: addform: formResult is undefined");
         }
-        else {
-            this._logger.getLogger().error(new Error("Form creation returned a null result"));
-        }
+        this._formsCollection.addItem(formResult);
+        console.log(this._formsCollection);
     }
+    /**
+     * Creates form instances from all existing 'form' elements in the document
+     * when the FormManager is initialized.
+     */
     createForms() {
         const forms = document.querySelectorAll("form");
-        for (let i = 0; i < forms.length; i++) {
-            try {
-                this.addform(forms[i]);
-            }
-            catch (error) {
-                // Catch any other unexpected errors
-                this._logger.getLogger().error(error instanceof Error ? error : new Error("An unexpected error occurred"));
-            }
+        // Convert the NodeList to an array
+        const formsArray = Array.from(forms);
+        // For Loop for formsArray
+        for (const formElement of formsArray) {
+            this.addform(formElement);
         }
     }
 };
 FormManager = __decorate([
-    (0,inversify__WEBPACK_IMPORTED_MODULE_2__.injectable)(),
+    (0,inversify__WEBPACK_IMPORTED_MODULE_2__.injectable)()
+    /**
+     * Manages form instances within the application, including the creation
+     * of form objects and the observation of DOM mutations for dynamically
+     * added forms.
+     * @class
+     * @implements {IFormManager}
+     */
+    ,
     __param(0, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ObservableFormsCollection)),
     __param(1, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormFactory)),
-    __param(2, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventService)),
+    __param(2, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventEmitter)),
     __param(3, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebuggingLogger)),
     __metadata("design:paramtypes", [Object, Object, Object, Object])
 ], FormManager);
@@ -5347,10 +5383,14 @@ var __param = (undefined && undefined.__param) || function (paramIndex, decorato
 let Initializer = class Initializer {
     _options;
     _formManager;
+    _eventService;
+    _stateManager;
     _eventEmitter;
-    constructor(_options, _formManager, _eventEmitter) {
+    constructor(_options, _formManager, _eventService, _stateManager, _eventEmitter) {
         this._options = _options;
         this._formManager = _formManager;
+        this._eventService = _eventService;
+        this._stateManager = _stateManager;
         this._eventEmitter = _eventEmitter;
     }
     async init() {
@@ -5379,8 +5419,10 @@ Initializer = __decorate([
     (0,inversify__WEBPACK_IMPORTED_MODULE_1__.injectable)(),
     __param(0, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.Options)),
     __param(1, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormManager)),
-    __param(2, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventEmitter)),
-    __metadata("design:paramtypes", [Object, Object, Object])
+    __param(2, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventService)),
+    __param(3, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.StateManager)),
+    __param(4, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventEmitter)),
+    __metadata("design:paramtypes", [Object, Object, Object, Object, Object])
 ], Initializer);
 
 
@@ -5647,67 +5689,6 @@ class Result {
 
 /***/ }),
 
-/***/ "./src/RuleFactory.ts":
-/*!****************************!*\
-  !*** ./src/RuleFactory.ts ***!
-  \****************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   RuleFactory: () => (/* binding */ RuleFactory)
-/* harmony export */ });
-/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
-var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-
-/* export class RuleFactory implements IRuleFactory {
-    ruleConstructors: Map<string, RuleConstructor> = new Map();
-
-    registerRuleConstructor(type: string, constructor: RuleConstructor): void {
-        if (this.ruleConstructors.has(type)) {
-            throw new Error(`A rule constructor for type '${type}' is already registered.`);
-        }
-        this.ruleConstructors.set(type, constructor);
-    }
-
-    createRule(rule: IValidationRule): IValidationRule {
-        if (!rule.type) {
-            throw new Error("The rule does not have a type defined.");
-        }
-
-        const constructor = this.ruleConstructors.get(rule.type);
-        if (!constructor) {
-            throw new Error(`Rule type '${rule.type}' is not recognized.`);
-        }
-
-        // We need to ensure that the constructor can handle the `attributes` property properly.
-        // This might involve converting `NamedNodeMap` to a suitable format if necessary.
-        return new constructor(rule.attribute, rule.message); // Adjust according to how your constructors are set up.
-    }
-}
- */
-let RuleFactory = class RuleFactory {
-    registerRuleConstructor(type, constructor) {
-        throw new Error("Method not implemented.");
-    }
-    createRule(rule) {
-        throw new Error("Method not implemented.");
-    }
-};
-RuleFactory = __decorate([
-    (0,inversify__WEBPACK_IMPORTED_MODULE_0__.injectable)()
-], RuleFactory);
-
-
-
-/***/ }),
-
 /***/ "./src/StateManager.ts":
 /*!*****************************!*\
   !*** ./src/StateManager.ts ***!
@@ -5741,6 +5722,7 @@ let StateManager = class StateManager {
     dirtyMap = {};
     constructor(_logger) {
         this._logger = _logger;
+        console.log("StateManager constructor");
     }
     makeControlDirty(controlName) {
         this.dirtyMap[controlName] = true;
@@ -5773,52 +5755,6 @@ StateManager = __decorate([
 
 /***/ }),
 
-/***/ "./src/ValidationRuleRegistry.ts":
-/*!***************************************!*\
-  !*** ./src/ValidationRuleRegistry.ts ***!
-  \***************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   ValidationRuleRegistry: () => (/* binding */ ValidationRuleRegistry)
-/* harmony export */ });
-/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
-var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-
-let ValidationRuleRegistry = class ValidationRuleRegistry {
-    rules = [];
-    validationAttribute = "data-val";
-    setValidationAttribute(attribute) {
-        this.validationAttribute = attribute;
-    }
-    addRule(rule) {
-        this.rules.push(rule);
-    }
-    getRulesForControl(input) {
-        const validationTypeAttribute = input.getAttribute(this.validationAttribute);
-        if (!validationTypeAttribute)
-            return [];
-        // Split the validation types into an array, allowing for a single type or a comma-separated list
-        const validationTypes = validationTypeAttribute.split(",").map(type => type.trim());
-        // Filter and return rules that match any of the types in the list
-        return this.rules.filter(rule => validationTypes.includes(rule.type));
-    }
-};
-ValidationRuleRegistry = __decorate([
-    (0,inversify__WEBPACK_IMPORTED_MODULE_0__.injectable)()
-], ValidationRuleRegistry);
-
-
-
-/***/ }),
-
 /***/ "./src/di/container-config.ts":
 /*!************************************!*\
   !*** ./src/di/container-config.ts ***!
@@ -5830,22 +5766,20 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   container: () => (/* binding */ container)
 /* harmony export */ });
-/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/container/container.js");
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/container/container.js");
 /* harmony import */ var _container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./container-types */ "./src/di/container-types.ts");
 /* harmony import */ var _logger_debuggingLogger__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../logger/debuggingLogger */ "./src/logger/debuggingLogger.ts");
 /* harmony import */ var _services_loggerService__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../services/loggerService */ "./src/services/loggerService.ts");
 /* harmony import */ var _Initializer__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../Initializer */ "./src/Initializer.ts");
 /* harmony import */ var _EventEmitter__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../EventEmitter */ "./src/EventEmitter.ts");
 /* harmony import */ var _FormFactory__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../FormFactory */ "./src/FormFactory.ts");
-/* harmony import */ var _services_ValidationService__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../services/ValidationService */ "./src/services/ValidationService.ts");
-/* harmony import */ var _ObservableCollection__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../ObservableCollection */ "./src/ObservableCollection.ts");
-/* harmony import */ var _DebouncerFactory__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../DebouncerFactory */ "./src/DebouncerFactory.ts");
-/* harmony import */ var _FormManager__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../FormManager */ "./src/FormManager.ts");
-/* harmony import */ var _ValidationRuleRegistry__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../ValidationRuleRegistry */ "./src/ValidationRuleRegistry.ts");
-/* harmony import */ var _RuleFactory__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../RuleFactory */ "./src/RuleFactory.ts");
-/* harmony import */ var _services_EventService__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../services/EventService */ "./src/services/EventService.ts");
-/* harmony import */ var _StateManager__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ../StateManager */ "./src/StateManager.ts");
-/* harmony import */ var _DebounceManager__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ..//DebounceManager */ "./src/DebounceManager.ts");
+/* harmony import */ var _ObservableCollection__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../ObservableCollection */ "./src/ObservableCollection.ts");
+/* harmony import */ var _DebouncerFactory__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../DebouncerFactory */ "./src/DebouncerFactory.ts");
+/* harmony import */ var _FormManager__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../FormManager */ "./src/FormManager.ts");
+/* harmony import */ var _services_EventService__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../services/EventService */ "./src/services/EventService.ts");
+/* harmony import */ var _StateManager__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../StateManager */ "./src/StateManager.ts");
+/* harmony import */ var _DebounceManager__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../DebounceManager */ "./src/DebounceManager.ts");
+/* harmony import */ var _services_ValidationService__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../services/ValidationService */ "./src/services/ValidationService.ts");
 
 
 
@@ -5860,23 +5794,19 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-
-
-const container = new inversify__WEBPACK_IMPORTED_MODULE_15__.Container();
-container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.Logger).to(_services_loggerService__WEBPACK_IMPORTED_MODULE_2__.LoggerService).inRequestScope();
+const container = new inversify__WEBPACK_IMPORTED_MODULE_13__.Container();
+container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.Logger).to(_services_loggerService__WEBPACK_IMPORTED_MODULE_2__.LoggerService).inSingletonScope();
 container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventEmitter).to((_EventEmitter__WEBPACK_IMPORTED_MODULE_4__.EventEmitter)).inRequestScope();
-container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventService).to(_services_EventService__WEBPACK_IMPORTED_MODULE_12__.EventService).inSingletonScope;
-container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.StateManager).to(_StateManager__WEBPACK_IMPORTED_MODULE_13__.StateManager).inSingletonScope();
+container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventService).to(_services_EventService__WEBPACK_IMPORTED_MODULE_9__.EventService).inSingletonScope;
+container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.StateManager).to(_StateManager__WEBPACK_IMPORTED_MODULE_10__.StateManager).inSingletonScope();
 container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebuggingLogger).to(_logger_debuggingLogger__WEBPACK_IMPORTED_MODULE_1__.DebuggingLogger).inRequestScope();
 container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.Initializer).to(_Initializer__WEBPACK_IMPORTED_MODULE_3__.Initializer).inSingletonScope();
-container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormManager).to(_FormManager__WEBPACK_IMPORTED_MODULE_9__.FormManager).inSingletonScope();
+container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormManager).to(_FormManager__WEBPACK_IMPORTED_MODULE_8__.FormManager).inSingletonScope();
 container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormFactory).to(_FormFactory__WEBPACK_IMPORTED_MODULE_5__.FormFactory).inSingletonScope();
-container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ValidationService).to(_services_ValidationService__WEBPACK_IMPORTED_MODULE_6__.ValidationService).inSingletonScope();
-container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ObservableFormsCollection).to((_ObservableCollection__WEBPACK_IMPORTED_MODULE_7__.ObservableCollection)).inSingletonScope();
-container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebouncerManager).to(_DebounceManager__WEBPACK_IMPORTED_MODULE_14__.DebouncerManager).inSingletonScope();
-container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebouncerFactory).to(_DebouncerFactory__WEBPACK_IMPORTED_MODULE_8__.DebouncerFactory).inSingletonScope();
-container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.RuleFactory).to(_RuleFactory__WEBPACK_IMPORTED_MODULE_11__.RuleFactory).inSingletonScope();
-container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ValidationRuleRegistry).to(_ValidationRuleRegistry__WEBPACK_IMPORTED_MODULE_10__.ValidationRuleRegistry).inSingletonScope();
+container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ObservableFormsCollection).to((_ObservableCollection__WEBPACK_IMPORTED_MODULE_6__.ObservableCollection)).inSingletonScope();
+container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebouncerManager).to(_DebounceManager__WEBPACK_IMPORTED_MODULE_11__.DebouncerManager).inSingletonScope();
+container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebouncerFactory).to(_DebouncerFactory__WEBPACK_IMPORTED_MODULE_7__.DebouncerFactory).inSingletonScope();
+container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ValidationService).to(_services_ValidationService__WEBPACK_IMPORTED_MODULE_12__.ValidationService).inSingletonScope();
 
 
 
@@ -5906,9 +5836,7 @@ const TYPES = {
     FormManager: Symbol.for("IFormManager"),
     FormFactory: Symbol.for("IFormFactory"),
     ObservableFormsCollection: Symbol.for("IObservableCollection"),
-    ValidationService: Symbol.for("IValidationService"),
-    ValidationRuleRegistry: Symbol.for("IValidationRuleRegistry"),
-    RuleFactory: Symbol.for("IRuleFactory")
+    ValidationService: Symbol.for("IValidationService")
 };
 
 
@@ -6033,10 +5961,12 @@ let EventService = class EventService {
         this._stateManager = _stateManager;
         this._debouncerManager = _debouncerManager;
         this._logger = _logger;
+        console.log("EventService constructor");
         this._observableFormsCollection.addObserver(this);
     }
     // Add Listeners When We Get a Notification of a New Form
     async notify(change) {
+        console.log("EventService notify");
         const { type: changeType, item: form } = change;
         if (changeType !== "add" || !form.formElement) {
             return;
@@ -6077,35 +6007,34 @@ let EventService = class EventService {
     createInputHandler(debounceTime) {
         return (event) => {
             const control = event.target;
-            this.makeControlDirty(control);
+            this._stateManager.makeControlDirty(control.name);
             this.debouncedValidate(control, debounceTime);
         };
     }
     createBlurHandler() {
         return (event) => {
-            // Use a type assertion to convince TypeScript that 'event' is a FocusEvent.
-            const focusEvent = event;
-            const target = focusEvent.target;
-            const relatedTarget = focusEvent.relatedTarget;
-            // Check if the relatedTarget is focusable and warrants validation
-            if (relatedTarget && (relatedTarget.tagName === "INPUT" || relatedTarget.tagName === "SELECT" || relatedTarget.tagName === "TEXTAREA" || relatedTarget.isContentEditable)) {
-                // Perform actions for blurring towards a focusable element
-                this.makeControlDirty(target);
-                this._validationService.validateControl(target).catch(error => {
-                    this._logger.getLogger().error(error instanceof Error ? error : new Error("Error in blurEventHandler: " + error));
-                });
-            }
-            else {
-                // This blur is to a non-focusable element sont call validateControl
-                return;
-            }
+            // Immediately Invoked Function Expression (IIFE)
+            (async (event) => {
+                const focusEvent = event;
+                const target = focusEvent.target;
+                const relatedTarget = focusEvent.relatedTarget;
+                if (relatedTarget && (relatedTarget.tagName === "INPUT" || relatedTarget.tagName === "SELECT" || relatedTarget.tagName === "TEXTAREA" || relatedTarget.isContentEditable)) {
+                    this._stateManager.makeControlDirty(target.name);
+                    try {
+                        await this._validationService.validateControl(target);
+                    }
+                    catch (error) {
+                        this._logger.getLogger().error(error instanceof Error ? error : new Error("Error in blurEventHandler: " + error));
+                    }
+                }
+            })(event).catch(e => {
+                // Handle any errors that occurred during initialization
+                this._logger.getLogger().error("Error in IIFE: " + e);
+            });
         };
     }
     // Non-debounced focus event handler ("Useful for adding some CSS stuff.")
     focusEventHandler(event) {
-    }
-    makeControlDirty(input) {
-        this._stateManager.makeControlDirty(input.name);
     }
     debouncedValidate(input, debounceTime) {
         this._debouncerManager.getDebouncerForControl(input.name).debounce(async () => {
@@ -6212,115 +6141,17 @@ var __param = (undefined && undefined.__param) || function (paramIndex, decorato
 
 let ValidationService = class ValidationService {
     _observableFormsCollection;
-    _validationRulesRegistry;
-    validators = [];
-    controlValidityState = new WeakMap();
-    constructor(_observableFormsCollection, _validationRulesRegistry) {
+    constructor(_observableFormsCollection) {
         this._observableFormsCollection = _observableFormsCollection;
-        this._validationRulesRegistry = _validationRulesRegistry;
-        this._observableFormsCollection.addObserver(this);
     }
-    async init() {
-        // Initialize any needed properties or services here
-    }
-    async notify(change) {
-        if ("item" in change && change.type === "add") {
-            //console.log(change.item);
-            // Get all form controls from the form
-            const controls = Array.from(change.item.elements);
-            // Iterate over each control to apply validation
-            controls.forEach((element) => {
-                if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement) {
-                    // Use the existing rules from the ValidationRuleRegistry
-                    const rules = this._validationRulesRegistry.getRulesForControl(element);
-                    // Now process each rule on the element as needed
-                    rules.forEach(rule => {
-                        // Apply the validation rule to the element
-                        // ...
-                    });
-                }
-            });
-        }
-    }
-    async validateControl(input) {
-        // Determine the rule(s) for the input by querying the ValidationRuleRegistry
-        const rules = this._validationRulesRegistry.getRulesForControl(input);
-        // Iterate over each rule and find a validator that can handle it
-        for (const rule of rules) {
-            const validator = this.validators.find(v => v.canHandle(rule));
-            if (!validator) {
-                throw new Error(`No validator can handle the rule of type: ${rule.type}`);
-            }
-            if (!validator.validate(input.value, rule)) {
-                // Handle validation failure, e.g., by displaying an error message
-            }
-        }
-        // Handle successful validation, e.g., by clearing any error messages
-    }
-    // TODO: Refactor put inside a UI Handler
-    showValidationMessage(control, message) {
-        // Check if the control is contained within a parent element
-        const parentElement = control.parentElement;
-        if (!parentElement) {
-            console.warn("Control is not contained within a parent element");
-            return; // Exit the function if there is no parent element
-        }
-        // Find any element within the parent that has the 'data-valmsg-for' attribute for the control's name
-        const validationMessageElement = this.getValidationMessageElement(control);
-        if (validationMessageElement) {
-            // We found the element for the validation message, regardless of its type (it could be a <span>, <div>, etc.)
-            // Update the validation message text
-            validationMessageElement.textContent = message;
-            // Update the classes to reflect the validation state
-            validationMessageElement.classList.remove("field-validation-valid");
-            validationMessageElement.classList.add("field-validation-error");
-        }
-        else {
-            // If we couldn't find the element for the validation message, log a warning message
-            console.warn(`No validation message element found for control with name: ${control.name}`);
-        }
-    }
-    validateForm(form) {
+    validateControl(control) {
         throw new Error("Method not implemented.");
-    }
-    // TODO: Refactor put inside a UI Handler
-    hideValidationMessage(control) {
-        // Check if the control is contained within a parent element
-        const parentElement = control.parentElement;
-        if (!parentElement) {
-            console.warn("Control is not contained within a parent element");
-            return; // Exit the function if there is no parent element
-        }
-        // Find any element within the parent that has the 'data-valmsg-for' attribute for the control's name
-        const validationMessageElement = this.getValidationMessageElement(control);
-        if (validationMessageElement) {
-            // We found the element for the validation message, regardless of its type (it could be a <span>, <div>, etc.)
-            // Clear the validation message text
-            validationMessageElement.textContent = "";
-            // Update the classes to reflect the validation state
-            validationMessageElement.classList.remove("field-validation-error");
-            validationMessageElement.classList.add("field-validation-valid");
-        }
-        else {
-            // If we couldn't find the element for the validation message, log a warning message
-            console.warn(`No validation message element found for control with name: ${control.name}`);
-        }
-    }
-    // TODO: Refactor put inside a UI Handler
-    getValidationMessageElement(control) {
-        let msgElement = null;
-        //msgElement = control.parentNode//querySelector(`[data-valmsg-for="${control.name}"]`);
-        if (control.parentElement) {
-            msgElement = control.parentElement.querySelector(`[data-valmsg-for="${control.name}"]`);
-        }
-        return msgElement;
     }
 };
 ValidationService = __decorate([
     (0,inversify__WEBPACK_IMPORTED_MODULE_1__.injectable)(),
     __param(0, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ObservableFormsCollection)),
-    __param(1, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ValidationRuleRegistry)),
-    __metadata("design:paramtypes", [Object, Object])
+    __metadata("design:paramtypes", [Object])
 ], ValidationService);
 
 
@@ -6354,6 +6185,7 @@ var __metadata = (undefined && undefined.__metadata) || function (k, v) {
 
 let LoggerService = class LoggerService {
     constructor() {
+        console.log("LoggerService constructor");
         loglevel__WEBPACK_IMPORTED_MODULE_0__.setLevel(loglevel__WEBPACK_IMPORTED_MODULE_0__.levels.INFO);
     }
     get levels() {
@@ -6588,7 +6420,6 @@ class UnobtrusiveValidation {
     _options;
     _logger;
     _initializer;
-    _validationRuleRegistry;
     _initialized = false;
     static defaultOptions = {
         debug: false,
@@ -6615,10 +6446,9 @@ class UnobtrusiveValidation {
         }
         // Bind the options to the container
         _di_container_config__WEBPACK_IMPORTED_MODULE_1__.container.bind(_di_container_types__WEBPACK_IMPORTED_MODULE_2__.TYPES.Options).toConstantValue(this._options);
+        //const t = container.get<IEventService>(TYPES.EventService);
         // Get the logger from the container
         this._logger = _di_container_config__WEBPACK_IMPORTED_MODULE_1__.container.get(_di_container_types__WEBPACK_IMPORTED_MODULE_2__.TYPES.DebuggingLogger);
-        // Get the validation rule registry from the container
-        this._validationRuleRegistry = _di_container_config__WEBPACK_IMPORTED_MODULE_1__.container.get(_di_container_types__WEBPACK_IMPORTED_MODULE_2__.TYPES.ValidationRuleRegistry);
         // Get the initializer from the container
         this._initializer = _di_container_config__WEBPACK_IMPORTED_MODULE_1__.container.get(_di_container_types__WEBPACK_IMPORTED_MODULE_2__.TYPES.Initializer);
         this._logger.getLogger().info("UnobtrusiveValidation initialized");

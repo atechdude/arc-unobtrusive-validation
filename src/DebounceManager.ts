@@ -7,7 +7,9 @@ import { TYPES } from "./di/container-types";
 export class DebouncerManager implements IDebouncerManager {
     private debouncers: { [key: string]: Debouncer } = {};
 
-    constructor(@inject(TYPES.DebouncerFactory) private readonly _debounceFactory: IDebouncerFactory) {}
+    constructor(@inject(TYPES.DebouncerFactory) private readonly _debounceFactory: IDebouncerFactory) {
+        console.log("DebouncerManager constructor");
+    }
 
     getDebouncerForControl(controlName: string): Debouncer {
         if (!this.debouncers[controlName]) {
