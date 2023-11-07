@@ -133,8 +133,8 @@ export class EventService implements IEventService {
                                 error instanceof Error
                                     ? error
                                     : new Error(
-                                          "Error in blurEventHandler: " + error
-                                      )
+                                        "Error in blurEventHandler: " + error
+                                    )
                             );
                     }
                 }
@@ -166,8 +166,8 @@ export class EventService implements IEventService {
                             error instanceof Error
                                 ? error
                                 : new Error(
-                                      `Error in debouncedValidate for control ${input.name}: ${error}`
-                                  )
+                                    `Error in debouncedValidate for control ${input.name}: ${error}`
+                                )
                         );
                 }
             }, debounceTime);
@@ -204,8 +204,8 @@ export class EventService implements IEventService {
                         eventType === "focus"
                             ? "focusin"
                             : eventType === "blur"
-                            ? "focusout"
-                            : eventType;
+                                ? "focusout"
+                                : eventType;
                     formElement.removeEventListener(domEventType, listener);
                 }
             }
@@ -224,7 +224,11 @@ export class EventService implements IEventService {
         this._debouncerManager.clearDebouncersForControls(namesToClear);
     }
 }
-// TypeGuard for named control elements
+
+/**
+ *
+ * @param element
+ */
 function isNamedControlElement(
     element: Element
 ): element is HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement {

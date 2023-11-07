@@ -1,6 +1,8 @@
 ﻿import log from "loglevel";
 import { Result } from "./Result";
 import { Debouncer } from "./util/Debouncer";
+import { ValidationParams } from "./Types";
+import { ValidationControl } from "./ValidationControl";
 
 export interface IOptions {
     debug: boolean;
@@ -68,7 +70,11 @@ export interface IForm {
     buttons: HTMLButtonElement[];
     init(): void;
 }
-
+export interface IFormParser {
+    parse(formElement:HTMLFormElement): Record<string, IValidationRule[]>;
+    getValidationRules(input: HTMLElement): IValidationRule[];
+    getValidationInformation(input:HTMLElement):Result<IValidationInformation>;
+}
 export interface IFormResult {
     form: IForm | undefined;
     status: string;
@@ -80,15 +86,34 @@ export interface IFormFactory {
 }
 
 export interface IValidationService {
-    validateControl(
-        control: HTMLInputElement
-    ): Promise<Result<IValidationResult>>;
+    validateControl(control:HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement): void
 }
-export interface IValidationRule<T> {
-    priority: number;
-    errorMessage: string;
-    validator: IValidator<T>;
+export interface IValidationRuleRegistry {
+    addRule(ruleType: string, paramAttributes: string[]): void
+    removeRule(ruleType: string): void
+    getParamsForRule(ruleType: string): string[] | undefined
 }
+export interface IValidationRule {
+    type: string;
+    message: string;
+    params: ValidationParams;
+  }
+
+export interface IValidationControl {
+    control: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+    validationRules: IValidationRule[];
+    isValid: boolean;
+    validate(): void;
+    //addValidationRule(validationRule: IValidationRule): void;
+    //removeValidationRule(validationRule: IValidationRule): void;
+    //clearValidationRules(): void;
+}
+export interface IValidationInformation {
+    rules:IValidationRule[];
+    input:HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+    parentNode:HTMLElement;
+}
+
 export interface IValidator<T> {
     isValid: boolean;
     validate(value: T): boolean;

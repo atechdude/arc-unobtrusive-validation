@@ -1,3 +1,4 @@
+
 const TYPES = {
     Options: Symbol.for("IOptions"),
     Logger: Symbol.for("ILoggerService"),
@@ -11,7 +12,9 @@ const TYPES = {
     FormManager: Symbol.for("IFormManager"),
     FormObserver: Symbol.for("IFormObserver"),
     FormFactory: Symbol.for("IFormFactory"),
+    FormParser: Symbol.for("IFormParser"),
     ObservableFormsCollection: Symbol.for("IObservableCollection"),
+    ValidationRulesRegistry: Symbol.for("IValidationRulesRegistry"),
     ValidationService: Symbol.for("IValidationService")
 };
 export { TYPES };

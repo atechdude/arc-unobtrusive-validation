@@ -1,5 +1,5 @@
 ﻿import { Result } from "./Result";
-import { IValidationResult } from "./interfaces";
+import { IValidationControl, IValidationResult, IValidationRule } from "./interfaces";
 
 type ValidationRule = {
     type:
@@ -33,19 +33,19 @@ type ValidationRule = {
     email?: string;
 };
 
-export class ValidationControl {
+export class ValidationControl implements IValidationControl {
     control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
     isInteracted: boolean = false;
-    rules: ValidationRule[];
+    //rules: ValidationRule[];
 
     constructor(
         control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     ) {
         this.control = control;
-        this.rules = this.extractRules(control);
+        //this.rules = this.extractRules(control);
     }
 
-    private extractRules(
+    /* private extractRules(
         control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     ): ValidationRule[] {
         const rules: ValidationRule[] = [];
@@ -53,9 +53,6 @@ export class ValidationControl {
 
         // Loop over all attributes
         for (const attr of attributesArray) {
-            //const t = control.querySelector(`[data-valmsg-for="${control.name}"]`);
-            console.log(attr);
-
             // Check if attribute starts with 'data-val-'
             if (attr.name.startsWith("data-val-")) {
                 // For required rule
@@ -75,12 +72,12 @@ export class ValidationControl {
                         maxLength: control.getAttribute("data-val-length-max")
                             ? parseInt(
                                   control.getAttribute("data-val-length-max")!
-                              )
+                            )
                             : undefined,
                         minLength: control.getAttribute("data-val-length-min")
                             ? parseInt(
                                   control.getAttribute("data-val-length-min")!
-                              )
+                            )
                             : undefined,
                         priority: 1
                     });
@@ -94,12 +91,12 @@ export class ValidationControl {
                         maxRange: control.getAttribute("data-val-range-max")
                             ? parseInt(
                                   control.getAttribute("data-val-range-max")!
-                              )
+                            )
                             : undefined,
                         minRange: control.getAttribute("data-val-range-min")
                             ? parseInt(
                                   control.getAttribute("data-val-range-min")!
-                              )
+                            )
                             : undefined,
                         priority: 2
                     });
@@ -142,7 +139,7 @@ export class ValidationControl {
                                   control.getAttribute(
                                       "data-val-minlength-min"
                                   )!
-                              )
+                            )
                             : undefined,
                         priority: 5 // Assign appropriate priority
                     });
@@ -198,203 +195,205 @@ export class ValidationControl {
         }
         // Sort on Priority
         return rules.sort((a, b) => a.priority - b.priority);
-    }
-    async validate(): Promise<Result<IValidationResult>> {
-        let errorMessage = "";
-        let isValid: boolean = true;
-
+    } */
+    async validate(rules:IValidationRule[]): Promise<Result<IValidationResult>> {
+        const errorMessage = "";
+        const isValid: boolean = true;
+        for(const rule of rules) {
+            console.log(rule);
+        }
         // Sort rules based on priority before processing
-        const sortedRules = this.rules.sort((a, b) => a.priority - b.priority);
+        //const sortedRules = this.rules.sort((a, b) => a.priority - b.priority);
 
-        for (const rule of sortedRules) {
+        /*  for (const rule of rules) {
             const value = this.control.value.trim();
 
             switch (rule.type) {
-                case "required":
-                    if (!value) {
-                        errorMessage = rule.message;
-                        isValid = false;
-                    }
-                    break;
-                case "length":
-                    if (
-                        (rule.maxLength !== undefined &&
+            case "required":
+                if (!value) {
+                    errorMessage = rule.message;
+                    isValid = false;
+                }
+                break;
+            case "length":
+                if (
+                    (rule.maxLength !== undefined &&
                             value.length > rule.maxLength) ||
                         (rule.minLength !== undefined &&
                             value.length < rule.minLength)
-                    ) {
-                        errorMessage = rule.message;
-                        isValid = false;
-                    }
-                    break;
-                case "range": {
-                    const numValue = parseFloat(value);
-                    if (!isNaN(numValue)) {
-                        if (
-                            (rule.maxRange !== undefined &&
+                ) {
+                    errorMessage = rule.message;
+                    isValid = false;
+                }
+                break;
+            case "range": {
+                const numValue = parseFloat(value);
+                if (!isNaN(numValue)) {
+                    if (
+                        (rule.maxRange !== undefined &&
                                 numValue > rule.maxRange) ||
                             (rule.minRange !== undefined &&
                                 numValue < rule.minRange)
-                        ) {
-                            errorMessage = rule.message;
-                            isValid = false;
-                        }
-                    }
-                    break;
-                }
-                case "regex":
-                    if (rule.pattern && !new RegExp(rule.pattern).test(value)) {
-                        errorMessage = rule.message;
-                        isValid = false;
-                    }
-                    break;
-                case "compare": {
-                    const compareToControlName = rule.compareTo;
-                    if (compareToControlName) {
-                        const compareControl = document.querySelector(
-                            `[name='${compareToControlName}']`
-                        ) as HTMLInputElement;
-                        if (
-                            compareControl &&
-                            value !== compareControl.value.trim()
-                        ) {
-                            errorMessage = rule.message;
-                            isValid = false;
-                        }
-                    }
-
-                    break;
-                }
-                case "minlength":
-                    if (
-                        rule.minLength !== undefined &&
-                        value.length < rule.minLength
                     ) {
                         errorMessage = rule.message;
                         isValid = false;
                     }
-                    break;
-                case "phone": {
-                    const phonePattern =
-                        /^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$/; // Simple pattern for US phone numbers
-                    if (!phonePattern.test(value)) {
+                }
+                break;
+            }
+            case "regex":
+                if (rule.pattern && !new RegExp(rule.pattern).test(value)) {
+                    errorMessage = rule.message;
+                    isValid = false;
+                }
+                break;
+            case "compare": {
+                const compareToControlName = rule.compareTo;
+                if (compareToControlName) {
+                    const compareControl = document.querySelector(
+                        `[name='${compareToControlName}']`
+                    ) as HTMLInputElement;
+                    if (
+                        compareControl &&
+                            value !== compareControl.value.trim()
+                    ) {
                         errorMessage = rule.message;
                         isValid = false;
                     }
-                    break;
                 }
 
-                case "url": {
-                    // This pattern checks for a basic valid URL (http, https, ftp)
-                    const urlPattern = new RegExp(
-                        "^(https?:\\/\\/)?" + // Protocol
+                break;
+            }
+            case "minlength":
+                if (
+                    rule.minLength !== undefined &&
+                        value.length < rule.minLength
+                ) {
+                    errorMessage = rule.message;
+                    isValid = false;
+                }
+                break;
+            case "phone": {
+                const phonePattern =
+                        /^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$/; // Simple pattern for US phone numbers
+                if (!phonePattern.test(value)) {
+                    errorMessage = rule.message;
+                    isValid = false;
+                }
+                break;
+            }
+
+            case "url": {
+                // This pattern checks for a basic valid URL (http, https, ftp)
+                const urlPattern = new RegExp(
+                    "^(https?:\\/\\/)?" + // Protocol
                             "((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|" + // Domain name
                             "((\\d{1,3}\\.){3}\\d{1,3}))" + // OR ip (v4) address
                             "(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*" + // Port and path
                             "(\\?[;&a-z\\d%_.~+=-]*)?" + // Query string
                             "(\\#[-a-z\\d_]*)?$",
-                        "i" // Fragment locator
-                    );
+                    "i" // Fragment locator
+                );
 
-                    if (!urlPattern.test(value)) {
-                        errorMessage = rule.message;
-                        isValid = false;
-                    }
-                    break;
+                if (!urlPattern.test(value)) {
+                    errorMessage = rule.message;
+                    isValid = false;
                 }
-                case "creditcard":
-                    if (!this.isValidCreditCard(value)) {
-                        errorMessage = rule.message;
-                        isValid = false;
-                    }
-                    break;
-                case "fileextensions": {
-                    const extensionsError = this.control.getAttribute(
-                        "data-val-fileextensions"
-                    );
-                    const allowedExtensionsAttribute =
+                break;
+            }
+            case "creditcard":
+                if (!this.isValidCreditCard(value)) {
+                    errorMessage = rule.message;
+                    isValid = false;
+                }
+                break;
+            case "fileextensions": {
+                const extensionsError = this.control.getAttribute(
+                    "data-val-fileextensions"
+                );
+                const allowedExtensionsAttribute =
                         this.control.getAttribute(
                             "data-val-fileextensions-extensions"
                         );
 
-                    if (extensionsError && allowedExtensionsAttribute) {
-                        const allowedExtensions = allowedExtensionsAttribute
-                            .split(",")
-                            .map((ext) => ext.trim().toLowerCase());
-                        const files = (this.control as HTMLInputElement).files;
-                        const fileArray = files ? Array.from(files) : [];
-                        const invalidFiles = fileArray.filter((file) => {
-                            const fileExtension = file.name
-                                .split(".")
-                                .pop()
-                                ?.toLowerCase();
-                            return (
-                                !fileExtension ||
+                if (extensionsError && allowedExtensionsAttribute) {
+                    const allowedExtensions = allowedExtensionsAttribute
+                        .split(",")
+                        .map((ext) => ext.trim().toLowerCase());
+                    const files = (this.control as HTMLInputElement).files;
+                    const fileArray = files ? Array.from(files) : [];
+                    const invalidFiles = fileArray.filter((file) => {
+                        const fileExtension = file.name
+                            .split(".")
+                            .pop()
+                            ?.toLowerCase();
+                        return (
+                            !fileExtension ||
                                 !allowedExtensions.includes(fileExtension)
-                            );
-                        });
-
-                        if (invalidFiles.length > 0) {
-                            const invalidFileNames = invalidFiles
-                                .map((file) => file.name)
-                                .join(", ");
-                            errorMessage = `${extensionsError}. The following files have invalid extensions: ${invalidFileNames}`;
-                            isValid = false;
-                        }
-                    }
-                    break;
-                }
-                case "remote": {
-                    const url = rule.remote;
-                    if (url && this.control && this.control.value) {
-                        //const paramName = this.control.value;
-                        const encodedURI = encodeURIComponent(
-                            this.control.value
                         );
-                        const validationUrl = `${url}?${this.control.name}=${encodedURI}`;
+                    });
 
-                        try {
-                            console.log(
-                                "Remote validation started with url: ",
-                                validationUrl
-                            );
-                            const response = await fetch(validationUrl, {
-                                method: "GET",
-                                headers: {
-                                    "Content-Type": "application/json"
-                                }
-                            });
-
-                            if (response.ok) {
-                                const responseData = await response.json();
-                                isValid = responseData.isValid;
-                                errorMessage = rule.message;
-                            } else {
-                                throw new Error("Failed to validate remotely");
-                            }
-                        } catch (error) {
-                            console.error("Remote validation error:", error);
-                            isValid = false;
-                            errorMessage = "Error during remote validation.";
-                        }
-                    }
-                    break;
-                }
-                case "email": {
-                    // A common regex pattern for validating an email address
-                    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-                    // Perform regex email validation
-                    if (!emailPattern.test(this.control.value)) {
-                        errorMessage = rule.message || "Invalid email address.";
+                    if (invalidFiles.length > 0) {
+                        const invalidFileNames = invalidFiles
+                            .map((file) => file.name)
+                            .join(", ");
+                        errorMessage = `${extensionsError}. The following files have invalid extensions: ${invalidFileNames}`;
                         isValid = false;
                     }
-                    break;
                 }
+                break;
+            }
+            case "remote": {
+                const url = rule.remote;
+                if (url && this.control && this.control.value) {
+                    //const paramName = this.control.value;
+                    const encodedURI = encodeURIComponent(
+                        this.control.value
+                    );
+                    const validationUrl = `${url}?${this.control.name}=${encodedURI}`;
+
+                    try {
+                        console.log(
+                            "Remote validation started with url: ",
+                            validationUrl
+                        );
+                        const response = await fetch(validationUrl, {
+                            method: "GET",
+                            headers: {
+                                "Content-Type": "application/json"
+                            }
+                        });
+
+                        if (response.ok) {
+                            const responseData = await response.json();
+                            isValid = responseData.isValid;
+                            errorMessage = rule.message;
+                        } else {
+                            throw new Error("Failed to validate remotely");
+                        }
+                    } catch (error) {
+                        console.error("Remote validation error:", error);
+                        isValid = false;
+                        errorMessage = "Error during remote validation.";
+                    }
+                }
+                break;
+            }
+            case "email": {
+                // A common regex pattern for validating an email address
+                const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+                // Perform regex email validation
+                if (!emailPattern.test(this.control.value)) {
+                    errorMessage = rule.message || "Invalid email address.";
+                    isValid = false;
+                }
+                break;
+            }
             }
 
             if (!isValid) break;
-        }
+        } */
 
         return new Result<IValidationResult>({
             isValid: isValid,

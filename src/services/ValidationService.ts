@@ -1,23 +1,30 @@
 ﻿import { inject, injectable } from "inversify";
-import { Result } from "../Result";
 import { TYPES } from "../di/container-types";
+import { ValidationControl } from "../ValidationControl";
 import {
-    IForm,
-    IObservableCollection,
-    IValidationResult,
+
+    IFormParser,
+
+
     IValidationService
 } from "../interfaces";
 
 @injectable()
 export class ValidationService implements IValidationService {
     constructor(
-        @inject(TYPES.ObservableFormsCollection)
-        private readonly _observableFormsCollection: IObservableCollection<IForm>
+        @inject(TYPES.FormParser) private readonly _formParser: IFormParser
     ) {}
+    validateControl(control:HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement): void
+    {
+        const validationControl = new ValidationControl(control);
+        const info = this._formParser.getValidationInformation(control);
+        console.log(info);
 
-    validateControl(
-        control: HTMLInputElement
-    ): Promise<Result<IValidationResult>> {
-        throw new Error("Method not implemented.");
+        //const validationRules = this._formParser.getValidationRules(control);
+        //console.log(validationRules);
+        //validationControl.validate(validationRules);
+        // return validationControl;
+
+
     }
 }

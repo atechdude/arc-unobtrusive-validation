@@ -11,10 +11,12 @@ import {
     IFormFactory,
     IFormManager,
     IFormObserver,
+    IFormParser,
     IInitializer,
     ILoggerService,
     IObservableCollection,
     IStateManager,
+    IValidationRuleRegistry,
     IValidationService
 } from "../interfaces";
 import { DebuggingLogger } from "../logger/debuggingLogger";
@@ -30,6 +32,8 @@ import { StateManager } from "../StateManager";
 import { DebouncerManager } from "../DebounceManager";
 import { ValidationService } from "../services/ValidationService";
 import { FormObserver } from "../FormObserver";
+import { ValidationRuleRegistry } from "../ValidationRuleResgistry";
+import { FormParser } from "../FormParser";
 
 const container = new Container();
 
@@ -60,6 +64,10 @@ container
     .to(FormManager)
     .inSingletonScope();
 container
+    .bind<IFormParser>(TYPES.FormParser)
+    .to(FormParser)
+    .inSingletonScope();
+container
     .bind<IFormObserver>(TYPES.FormObserver)
     .to(FormObserver)
     .inSingletonScope();
@@ -78,6 +86,10 @@ container
 container
     .bind<IDebouncerFactory>(TYPES.DebouncerFactory)
     .to(DebouncerFactory)
+    .inSingletonScope();
+container
+    .bind<IValidationRuleRegistry>(TYPES.ValidationRulesRegistry)
+    .to(ValidationRuleRegistry)
     .inSingletonScope();
 container
     .bind<IValidationService>(TYPES.ValidationService)
