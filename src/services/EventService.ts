@@ -1,5 +1,7 @@
 import { inject, injectable } from "inversify";
 import { TYPES } from "../di/container-types";
+
+import { Debouncer } from "../utils/Debouncer";
 import {
     IChange,
     IDebouncerFactory,
@@ -11,7 +13,7 @@ import {
     IStateManager,
     IValidationService
 } from "../interfaces";
-import { Debouncer } from "../util/Debouncer";
+
 @injectable()
 
 // TODO: Create Interface and setup container.

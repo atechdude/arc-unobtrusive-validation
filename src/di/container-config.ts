@@ -13,34 +13,29 @@ import {
     IFormObserver,
     IFormParser,
     IInitializer,
-    ILoggerService,
+    ILogger,
     IObservableCollection,
     IStateManager,
-    IValidationRuleRegistry,
     IValidationService
-} from "../interfaces";
-import { DebuggingLogger } from "../logger/debuggingLogger";
-import { LoggerService } from "../services/loggerService";
-import { Initializer } from "../Initializer";
-import { EventEmitter } from "../EventEmitter";
-import { FormFactory } from "../FormFactory";
-import { ObservableCollection } from "../ObservableCollection";
-import { DebouncerFactory } from "../DebouncerFactory";
-import { FormManager } from "../FormManager";
+} from "@interfaces/index";
+import { Logger } from "../logging/Logger";
+import { EventEmitter } from "../classes/EventEmitter";
 import { EventService } from "../services/EventService";
-import { StateManager } from "../StateManager";
-import { DebouncerManager } from "../DebounceManager";
+import { StateManager } from "../managers/StateManager";
+import { DebuggingLogger } from "../logging/DebuggingLogger";
+import { FormManager } from "../managers/FormManager";
+import { Initializer } from "../classes/Initializer";
+import { FormParser } from "../classes/FormParser";
+import { FormObserver } from "../classes/FormObserver";
+import { FormFactory } from "../factory/FormFactory";
+import { ObservableCollection } from "../classes/ObservableCollection";
+import { DebouncerManager } from "../managers/DebounceManager";
+import { DebouncerFactory } from "../factory/DebouncerFactory";
 import { ValidationService } from "../services/ValidationService";
-import { FormObserver } from "../FormObserver";
-import { ValidationRuleRegistry } from "../ValidationRuleResgistry";
-import { FormParser } from "../FormParser";
 
 const container = new Container();
 
-container
-    .bind<ILoggerService>(TYPES.Logger)
-    .to(LoggerService)
-    .inSingletonScope();
+container.bind<ILogger>(TYPES.Logger).to(Logger).inSingletonScope();
 container
     .bind<IEventEmitter<IAppEvents>>(TYPES.EventEmitter)
     .to(EventEmitter<IAppEvents>)
@@ -63,10 +58,7 @@ container
     .bind<IFormManager>(TYPES.FormManager)
     .to(FormManager)
     .inSingletonScope();
-container
-    .bind<IFormParser>(TYPES.FormParser)
-    .to(FormParser)
-    .inSingletonScope();
+container.bind<IFormParser>(TYPES.FormParser).to(FormParser).inSingletonScope();
 container
     .bind<IFormObserver>(TYPES.FormObserver)
     .to(FormObserver)
@@ -87,10 +79,6 @@ container
     .bind<IDebouncerFactory>(TYPES.DebouncerFactory)
     .to(DebouncerFactory)
     .inSingletonScope();
-//container
-//    .bind<IValidationRuleRegistry>(TYPES.ValidationRulesRegistry)
-//    .to(ValidationRuleRegistry)
-//    .inSingletonScope();
 container
     .bind<IValidationService>(TYPES.ValidationService)
     .to(ValidationService)

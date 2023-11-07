@@ -32,17 +32,15 @@ export default class UnobtrusiveValidation {
                 .info("UnobtrusiveValidation already initialized, skipping...");
             return;
         }
-        // ...existing initialization logic...
+
         this._initialized = true;
-        console.log("UnobtrusiveValidation init");
-        // Initialization logic here
+
+        // Contaianer is already has options bound, unbind them
         if (container.isBound(TYPES.Options)) {
             container.unbind(TYPES.Options);
         }
         // Bind the options to the container
         container.bind<IOptions>(TYPES.Options).toConstantValue(this._options);
-
-        //const t = container.get<IEventService>(TYPES.EventService);
 
         // Get the logger from the container
         this._logger = container.get<IDecoratedLogger>(TYPES.DebuggingLogger);
@@ -50,7 +48,6 @@ export default class UnobtrusiveValidation {
         // Get the initializer from the container
         this._initializer = container.get<IInitializer>(TYPES.Initializer);
 
-        this._logger.getLogger().info("UnobtrusiveValidation initialized");
         // Initialize the initializer
         await this._initializer.init();
         this._initialized = true;
@@ -85,7 +82,7 @@ export default class UnobtrusiveValidation {
         // Update the internal options with the new settings.
         this._options = { ...this._options, ...options };
 
-        // You may want to check for specific options that require re-initialization.
+        // check for specific options that require re-initialization.
         if (options.autoInit !== undefined) {
             if (options.autoInit) {
                 // Call the init method to re-initialize.

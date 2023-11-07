@@ -8,7 +8,8 @@
         "eslint:recommended",
         "plugin:@typescript-eslint/recommended",
         "plugin:jsdoc/recommended"
-        
+       
+
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
@@ -18,10 +19,11 @@
     "plugins": [
         "@typescript-eslint",
         "jsdoc"
-        
+       
+
     ],
     "rules": {
-       
+        "prettier/prettier": "error",
         "semi": [ "error", "always" ],
         "quotes": [ "error", "double" ],
         "indent": [ "error", 4 ],
@@ -33,7 +35,6 @@
         "@typescript-eslint/explicit-function-return-type": "warn",
         "@typescript-eslint/explicit-module-boundary-types": "warn",
         "jsdoc/check-alignment": "error",
-        "jsdoc/check-indentation": "error",
         "jsdoc/require-jsdoc": "error"
     }
 }

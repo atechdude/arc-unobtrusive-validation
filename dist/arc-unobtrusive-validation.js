@@ -4925,137 +4925,10 @@ var Reflect;
 
 /***/ }),
 
-/***/ "./src/DebounceManager.ts":
-/*!********************************!*\
-  !*** ./src/DebounceManager.ts ***!
-  \********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   DebouncerManager: () => (/* binding */ DebouncerManager)
-/* harmony export */ });
-/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
-/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/inject.js");
-/* harmony import */ var _di_container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./di/container-types */ "./src/di/container-types.ts");
-var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (undefined && undefined.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __param = (undefined && undefined.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-
-
-let DebouncerManager = class DebouncerManager {
-    _debounceFactory;
-    debouncers = {};
-    constructor(_debounceFactory) {
-        this._debounceFactory = _debounceFactory;
-        console.log("DebouncerManager constructor");
-    }
-    getDebouncerForControl(controlName) {
-        if (!this.debouncers[controlName]) {
-            this.debouncers[controlName] = this._debounceFactory.create();
-        }
-        return this.debouncers[controlName];
-    }
-    clearDebouncersForControl(controlName) {
-        const debouncer = this.debouncers[controlName];
-        if (debouncer) {
-            debouncer.cancel(); // Assuming the debouncer has a cancel method
-            delete this.debouncers[controlName];
-        }
-    }
-    clearDebouncersForControls(controlNames) {
-        controlNames.forEach((controlName) => {
-            if (Object.prototype.hasOwnProperty.call(this.debouncers, controlName)) {
-                this.debouncers[controlName].cancel();
-                delete this.debouncers[controlName];
-            }
-        });
-    }
-};
-DebouncerManager = __decorate([
-    (0,inversify__WEBPACK_IMPORTED_MODULE_1__.injectable)(),
-    __param(0, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebouncerFactory)),
-    __metadata("design:paramtypes", [Object])
-], DebouncerManager);
-
-
-
-/***/ }),
-
-/***/ "./src/DebouncerFactory.ts":
-/*!*********************************!*\
-  !*** ./src/DebouncerFactory.ts ***!
-  \*********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   DebouncerFactory: () => (/* binding */ DebouncerFactory)
-/* harmony export */ });
-/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
-/* harmony import */ var _util_Debouncer__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./util/Debouncer */ "./src/util/Debouncer.ts");
-var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (undefined && undefined.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-
-
-/**
- * A factory for creating instances of `Debouncer`.
- *
- * The `DebouncerFactory` class implements the `IDebouncerFactory` interface
- * and is responsible for providing a method to create new `Debouncer` objects.
- * This class uses the `@injectable` decorator to allow it to be injected into
- * other components, enhancing modularity and testability.
- *
- * @see {@link IDebouncerFactory} for interface documentation.
- */
-let DebouncerFactory = class DebouncerFactory {
-    constructor() {
-        console.log("DebouncerFactory constructor");
-    }
-    /**
-     * Creates a new instance of `Debouncer`.
-     *
-     * This method implements the `create` method from the `IDebouncerFactory` interface.
-     * It allows consumers to obtain a fresh instance of `Debouncer` without needing to know
-     * the details of how the `Debouncer` is constructed.
-     *
-     * @returns {IDebouncer} An instance of `Debouncer` which can be used to debounce function calls.
-     */
-    create() {
-        return new _util_Debouncer__WEBPACK_IMPORTED_MODULE_0__.Debouncer();
-    }
-};
-DebouncerFactory = __decorate([
-    (0,inversify__WEBPACK_IMPORTED_MODULE_1__.injectable)(),
-    __metadata("design:paramtypes", [])
-], DebouncerFactory);
-
-
-
-/***/ }),
-
-/***/ "./src/EventEmitter.ts":
-/*!*****************************!*\
-  !*** ./src/EventEmitter.ts ***!
-  \*****************************/
+/***/ "./src/classes/EventEmitter.ts":
+/*!*************************************!*\
+  !*** ./src/classes/EventEmitter.ts ***!
+  \*************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -5109,10 +4982,10 @@ EventEmitter = __decorate([
 
 /***/ }),
 
-/***/ "./src/Form.ts":
-/*!*********************!*\
-  !*** ./src/Form.ts ***!
-  \*********************/
+/***/ "./src/classes/Form.ts":
+/*!*****************************!*\
+  !*** ./src/classes/Form.ts ***!
+  \*****************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -5154,246 +5027,10 @@ class Form {
 
 /***/ }),
 
-/***/ "./src/FormFactory.ts":
-/*!****************************!*\
-  !*** ./src/FormFactory.ts ***!
-  \****************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   FormFactory: () => (/* binding */ FormFactory)
-/* harmony export */ });
-/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
-/* harmony import */ var _Result__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Result */ "./src/Result.ts");
-/* harmony import */ var _Form__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Form */ "./src/Form.ts");
-var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (undefined && undefined.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-
-
-
-let FormFactory = class FormFactory {
-    constructor() { }
-    create(formElement) {
-        try {
-            if (formElement === undefined) {
-                return new _Result__WEBPACK_IMPORTED_MODULE_0__.Result(new Error("Form Element Is Undefined"));
-            }
-            const form = new _Form__WEBPACK_IMPORTED_MODULE_1__.Form(formElement);
-            return new _Result__WEBPACK_IMPORTED_MODULE_0__.Result(form);
-        }
-        catch (error) {
-            return new _Result__WEBPACK_IMPORTED_MODULE_0__.Result(error);
-        }
-    }
-};
-FormFactory = __decorate([
-    (0,inversify__WEBPACK_IMPORTED_MODULE_2__.injectable)(),
-    __metadata("design:paramtypes", [])
-], FormFactory);
-
-
-
-/***/ }),
-
-/***/ "./src/FormManager.ts":
-/*!****************************!*\
-  !*** ./src/FormManager.ts ***!
-  \****************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   FormManager: () => (/* binding */ FormManager)
-/* harmony export */ });
-/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
-/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/inject.js");
-/* harmony import */ var _di_container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./di/container-types */ "./src/di/container-types.ts");
-/* harmony import */ var _Result__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Result */ "./src/Result.ts");
-var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (undefined && undefined.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __param = (undefined && undefined.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-
-
-
-let FormManager = class FormManager {
-    _formsCollection;
-    _formFactory;
-    _eventEmitter;
-    _logger;
-    mutationObserver = null;
-    /**
-     * Constructs the FormManager instance responsible for managing form instances.
-     * It utilizes dependency injection to incorporate various services such as
-     * form collection management, form creation, event emission, and logging.
-     * @param {IObservableCollection<IForm>} _formsCollection - An observable collection that maintains the forms.
-     * @param {IFormFactory} _formFactory - A factory service for creating new form instances.
-     * @param {IEventEmitter<any>} _eventEmitter - An event emitter service to handle form-related events.
-     * @param {IDecoratedLogger} _logger - A logging service for error and debug reporting.
-     */
-    constructor(_formsCollection, _formFactory, _eventEmitter, _logger) {
-        this._formsCollection = _formsCollection;
-        this._formFactory = _formFactory;
-        this._eventEmitter = _eventEmitter;
-        this._logger = _logger;
-        console.log("FormManager: constructor");
-    }
-    /**
-     * Initializes form management by creating form instances from existing DOM
-     * and setting up a mutation observer for new forms added to the DOM.
-     */
-    init() {
-        this.createForms();
-    }
-    /**
-     * Processes mutation records from a `MutationObserver` and adds any detected new form elements to the form manager.
-     * It distinguishes between forms added directly under the observed node and forms nested within other elements.
-     * @param {MutationRecord[]} mutationsList - An array of `MutationRecord` objects representing individual mutations.
-     * The method iterates over this list, looking for mutations of the `childList` type, which indicate added or removed nodes.
-     * @example
-     * // Typically not called directly, but used as a callback for MutationObserver:
-     * const observer = new MutationObserver(handleFormMutations);
-     * observer.observe(document.body, { childList: true, subtree: true });
-     *
-     * // Could also be called manually in a testing context:
-     * handleFormMutations([
-     *   {
-     *     type: 'childList',
-     *     addedNodes: [document.createElement('form')],
-     *     removedNodes: [],
-     *     // other MutationRecord properties...
-     *   }
-     * ]);
-     * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver} for more information on `MutationObserver`.
-     * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/MutationRecord} for details on `MutationRecord`.
-     */
-    handleFormMutations(mutationsList) {
-        try {
-            for (const mutation of mutationsList) {
-                if (mutation.type === "childList") {
-                    // Process direct forms
-                    const directForms = Array.from(mutation.addedNodes).filter((node) => node instanceof HTMLFormElement);
-                    for (const form of directForms) {
-                        this.addForm(form);
-                    }
-                    // Process nested forms
-                    const nestedForms = Array.from(mutation.addedNodes)
-                        .filter((node) => node instanceof HTMLElement)
-                        .flatMap((node) => Array.from(node.querySelectorAll("form")));
-                    for (const form of nestedForms) {
-                        this.addForm(form);
-                    }
-                }
-            }
-        }
-        catch (error) {
-            // If error is an instance of Error, log its message; otherwise, log the error directly
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            this._logger
-                .getLogger()
-                .error(`Error in handleFormMutations: ${errorMessage}`);
-        }
-    }
-    /**
-     * Attempts to add a form to the forms collection.
-     * If the form is successfully created and added to the collection,
-     * a "formAdded" event is emitted.
-     * @param {HTMLFormElement} formElement - The HTML form element to be added to the collection.
-     * @throws Will log an error to the injected logger if the form creation fails or an unexpected error occurs.
-     */
-    addForm(formElement) {
-        try {
-            const formResults = this._formFactory.create(formElement);
-            if (!formResults.isSuccess) {
-                const error = _Result__WEBPACK_IMPORTED_MODULE_1__.Result.handleError(formResults);
-                this._logger
-                    .getLogger()
-                    .error(`FormManager: addForm: ${error}`);
-                return;
-            }
-            const formResult = _Result__WEBPACK_IMPORTED_MODULE_1__.Result.handleSuccess(formResults);
-            if (formResult === undefined) {
-                this._logger
-                    .getLogger()
-                    .error("FormManager: addForm: formResult is undefined");
-                return;
-            }
-            this._formsCollection.addItem(formResult);
-            this._eventEmitter.emit("formAdded", formResult);
-        }
-        catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            this._logger
-                .getLogger()
-                .error(`FormManager: addForm: Unexpected error: ${errorMessage}`);
-        }
-    }
-    /**
-     * Iterates over all form elements present in the document and attempts
-     * to add each one to the forms collection using the addForm method.
-     * Errors during the addition of individual forms are logged and do not
-     * halt the process for subsequent forms.
-     */
-    createForms() {
-        const forms = document.querySelectorAll("form");
-        const formsArray = Array.from(forms);
-        for (const formElement of formsArray) {
-            try {
-                this.addForm(formElement);
-            }
-            catch (error) {
-                const errorMessage = error instanceof Error ? error.message : String(error);
-                this._logger
-                    .getLogger()
-                    .error(`FormManager: createForms: Error when adding form: ${errorMessage}`);
-                // Optionally continue to next form or handle the error accordingly
-            }
-        }
-    }
-};
-FormManager = __decorate([
-    (0,inversify__WEBPACK_IMPORTED_MODULE_2__.injectable)()
-    /**
-     * Manages form instances within the application, including the creation
-     * of form objects and the observation of DOM mutations for dynamically
-     * added forms.
-     * @class
-     * @implements {IFormManager}
-     */
-    ,
-    __param(0, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ObservableFormsCollection)),
-    __param(1, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormFactory)),
-    __param(2, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventEmitter)),
-    __param(3, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebuggingLogger)),
-    __metadata("design:paramtypes", [Object, Object, Object, Object])
-], FormManager);
-
-
-
-/***/ }),
-
-/***/ "./src/FormObserver.ts":
-/*!*****************************!*\
-  !*** ./src/FormObserver.ts ***!
-  \*****************************/
+/***/ "./src/classes/FormObserver.ts":
+/*!*************************************!*\
+  !*** ./src/classes/FormObserver.ts ***!
+  \*************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -5403,7 +5040,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
 /* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/inject.js");
-/* harmony import */ var _di_container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./di/container-types */ "./src/di/container-types.ts");
+/* harmony import */ var _di_container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../di/container-types */ "./src/di/container-types.ts");
 var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -5425,7 +5062,6 @@ let FormObserver = class FormObserver {
     constructor(_formManager, _logger) {
         this._formManager = _formManager;
         this._logger = _logger;
-        _logger.getLogger().info("FormObserver: constructor");
     }
     startObserving() {
         if (this.mutationObserver) {
@@ -5456,10 +5092,10 @@ FormObserver = __decorate([
 
 /***/ }),
 
-/***/ "./src/FormParser.ts":
-/*!***************************!*\
-  !*** ./src/FormParser.ts ***!
-  \***************************/
+/***/ "./src/classes/FormParser.ts":
+/*!***********************************!*\
+  !*** ./src/classes/FormParser.ts ***!
+  \***********************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -5467,8 +5103,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   FormParser: () => (/* binding */ FormParser)
 /* harmony export */ });
-/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
-/* harmony import */ var _Result__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Result */ "./src/Result.ts");
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/inject.js");
+/* harmony import */ var _di_container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../di/container-types */ "./src/di/container-types.ts");
+/* harmony import */ var _Result__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Result */ "./src/classes/Result.ts");
 var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -5478,9 +5116,18 @@ var __decorate = (undefined && undefined.__decorate) || function (decorators, ta
 var __metadata = (undefined && undefined.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (undefined && undefined.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+
 
 
 let FormParser = class FormParser {
+    _logger;
+    /**
+     * A map of validation rule types to their associated priority levels.
+     * Higher priority rules will be processed first during validation.
+     */
     rulePriorities = new Map([
         ["required", 1],
         ["regex", 2],
@@ -5489,128 +5136,173 @@ let FormParser = class FormParser {
         ["remote-url", 5]
         // ... other rules with their respective priorities
     ]);
-    ruleParamAttributes = {
-        length: ["min", "max"],
-        range: ["min", "max"],
-        regex: ["pattern"]
-        // ... other rules can be mapped similarly
-    };
-    constructor() {
+    constructor(_logger) {
+        this._logger = _logger;
     }
+    /**
+     * Parses the given HTML form element and extracts validation rules for each input.
+     * @param {HTMLFormElement} formElement - The form element to parse.
+     * @returns {Record<string, IValidationRule[]>} A record object where each key is the
+     * name of a form control and each value is an array of validation rules associated
+     * with that control. If an error occurs during parsing, it logs the error and
+     * returns an empty object.
+     */
     parse(formElement) {
-        const validationRules = {};
-        const inputs = Array.from(formElement.elements);
-        inputs.forEach(input => {
-            if ((input instanceof HTMLInputElement || input instanceof HTMLSelectElement || input instanceof HTMLTextAreaElement) && input.name) {
-                const rules = this.getValidationRules(input);
-                // Assuming you have a function to assign priorities based on the rule type
-                validationRules[input.name] = rules;
-            }
-        });
-        return validationRules;
-    }
-    getValidationRules(input) {
-        const rules = [];
-        const rulesWithParams = {};
-        Array.from(input.attributes).forEach(attr => {
-            if (attr.name.startsWith("data-val")) {
-                const match = /data-val-([^\-]+)-?([^\-]+)?/.exec(attr.name);
-                if (match) {
-                    const [, ruleType, paramName] = match;
-                    if (!rulesWithParams[ruleType]) {
-                        rulesWithParams[ruleType] = {
-                            type: ruleType,
-                            message: '',
-                            params: {},
-                            priority: this.rulePriorities.get(ruleType) || 99
-                        };
-                    }
-                    // If it's a parameter of the rule, add it to the params object
-                    if (paramName) {
-                        rulesWithParams[ruleType].params[paramName] = attr.value;
-                    }
-                    else {
-                        // It's the main rule attribute, set the message
-                        rulesWithParams[ruleType].message = attr.value;
-                    }
+        try {
+            const validationRules = {};
+            const inputs = formElement.elements;
+            for (let i = 0; i < inputs.length; i++) {
+                const input = inputs.item(i);
+                if (input &&
+                    input.name &&
+                    (input instanceof HTMLInputElement ||
+                        input instanceof HTMLSelectElement ||
+                        input instanceof HTMLTextAreaElement)) {
+                    const rules = this.getValidationRules(input);
+                    validationRules[input.name] = rules;
                 }
             }
-        });
-        // Convert the aggregated rule objects back into an array
-        Object.values(rulesWithParams).forEach(rule => {
-            rules.push(rule);
-        });
-        // Sort the rules based on their assigned priority
-        return rules.sort((a, b) => a.priority - b.priority);
+            return validationRules;
+        }
+        catch (error) {
+            this._logger.error(`Error parsing form: ${formElement.name}`, error);
+            return {};
+        }
     }
-    getValidationRules1(input) {
-        const rules = [];
-        Array.from(input.attributes).forEach(attr => {
-            if (attr.name.startsWith("data-val") && attr.name !== "data-val") {
-                // Extract the rule type, e.g., 'length', 'regex', 'required'
-                const ruleType = attr.name.match(/data-val-([a-z]+)(?:-[a-z]+)?/i)?.[1] || "";
-                // Check if it's a parameter for an existing rule or a standalone rule
-                if (ruleType && !attr.name.endsWith(ruleType)) {
-                    // If it's a parameter, find the rule and add the parameter to it
-                    const rule = rules.find(r => r.type === ruleType);
-                    if (rule) {
-                        const paramName = attr.name.split(ruleType + "-")[1];
-                        rule.params[paramName] = attr.value;
-                    }
-                }
-                else {
-                    // It's a standalone rule, create it and set its priority
-                    const priority = this.rulePriorities.get(ruleType) || 99;
-                    rules.push({ type: ruleType, message: attr.value, params: {}, priority });
-                }
-            }
-        });
-        // Sort the rules based on their assigned priority
-        return rules.sort((a, b) => a.priority - b.priority);
-    }
-    getValidationInformation(input) {
-        const rules = this.getValidationRules(input);
-        const validationInformation = {
-            rules: rules,
-            input: input,
-            parentNode: input.parentNode
-        };
-        return new _Result__WEBPACK_IMPORTED_MODULE_0__.Result(validationInformation);
-    }
-    extractParams(input, ruleType) {
-        const params = {};
-        // Use the already existing `ruleParamAttributes` map to determine which attributes are parameters
-        const paramAttributes = this.ruleParamAttributes[ruleType];
-        if (paramAttributes) {
-            paramAttributes.forEach(param => {
-                // The attribute name is constructed from the rule type and the parameter name
-                const attributeName = `data-val-${ruleType}-${param}`;
-                const value = input.getAttribute(attributeName);
-                if (value !== null) {
-                    params[param] = value;
+    /**
+     * Parses the given HTML form element and extracts validation rules for each input.
+     * @param {HTMLFormElement} formElement - The form element to parse.
+     * @returns {Record<string, IValidationRule[]>} A record object where each key is the
+     * name of a form control and each value is an array of validation rules associated
+     * with that control. If an error occurs during parsing, it logs the error and
+     * returns an empty object.
+     */
+    parse1(formElement) {
+        try {
+            const validationRules = {};
+            const inputs = Array.from(formElement.elements);
+            inputs.forEach((input) => {
+                if ((input instanceof HTMLInputElement ||
+                    input instanceof HTMLSelectElement ||
+                    input instanceof HTMLTextAreaElement) &&
+                    input.name) {
+                    const rules = this.getValidationRules(input);
+                    validationRules[input.name] = rules;
                 }
             });
+            return validationRules;
         }
-        return params;
+        catch (error) {
+            this._logger.error(`Error parsing form: ${formElement.name}`, error);
+            // If parsing fails, return an empty object or consider rethrowing the exception
+            // after logging depending on how your application should respond to such situations.
+            return {};
+        }
+    }
+    /**
+     * Extracts validation rules from an input element's data attributes.
+     * @param {HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement} input - The input element to extract rules from.
+     * @returns {IValidationRule[]} An array of validation rule objects extracted from the input's data attributes.
+     * If an error occurs during the extraction process, it logs the error and returns an empty array.
+     */
+    getValidationRules(input) {
+        try {
+            const rules = [];
+            const rulesWithParams = {};
+            // Using a traditional for loop instead of Array.from().forEach()
+            for (let i = 0; i < input.attributes.length; i++) {
+                const attr = input.attributes[i];
+                if (attr.name.startsWith("data-val")) {
+                    const match = /data-val-([^\-]+)-?([^\-]+)?/.exec(attr.name);
+                    if (match) {
+                        const [, ruleType, paramName] = match;
+                        if (!rulesWithParams[ruleType]) {
+                            rulesWithParams[ruleType] = {
+                                type: ruleType,
+                                message: "",
+                                params: {},
+                                priority: this.rulePriorities.get(ruleType) || 99
+                            };
+                        }
+                        // If it's a parameter of the rule, add it to the params object
+                        if (paramName) {
+                            rulesWithParams[ruleType].params[paramName] =
+                                attr.value;
+                        }
+                        else {
+                            // It's the main rule attribute, set the message
+                            rulesWithParams[ruleType].message = attr.value;
+                        }
+                    }
+                }
+            }
+            // Convert the aggregated rule objects back into an array
+            for (const ruleType in rulesWithParams) {
+                if (Object.prototype.hasOwnProperty.call(rulesWithParams, ruleType)) {
+                    rules.push(rulesWithParams[ruleType]);
+                }
+            }
+            // Sort the rules based on their assigned priority
+            rules.sort((a, b) => a.priority - b.priority);
+            return rules;
+        }
+        catch (error) {
+            this._logger.error(`Error getting validation rules for input: ${input.name}`, error);
+            return [];
+        }
+    }
+    /**
+     * Retrieves validation-related information from an input element, including
+     * its validation rules and any additional details needed for validation.
+     * @param {HTMLElement} input - The input element to retrieve information from.
+     * @returns {Result<IValidationInformation>} A Result object that either contains the validation information or an error.
+     */
+    getValidationInformation(input) {
+        try {
+            // Attempt to get the validation rules for the input element.
+            const rules = this.getValidationRules(input);
+            // Construct the validation information object.
+            const parentNode = input.parentNode;
+            const validationInformation = {
+                rules: rules,
+                input: input,
+                parentNode: parentNode
+            };
+            // Return a successful Result with the validation information.
+            return new _Result__WEBPACK_IMPORTED_MODULE_1__.Result(validationInformation);
+        }
+        catch (error) {
+            // Log the error encountered during rule retrieval.
+            this._logger.error(`Error getting validation information for input: ${input}`, error);
+            // Return a Result object containing the error.
+            return new _Result__WEBPACK_IMPORTED_MODULE_1__.Result(error instanceof Error ? error : new Error(String(error)));
+        }
     }
 };
 FormParser = __decorate([
-    (0,inversify__WEBPACK_IMPORTED_MODULE_1__.injectable)(),
-    __metadata("design:paramtypes", [])
+    (0,inversify__WEBPACK_IMPORTED_MODULE_2__.injectable)()
+    /**
+     * Parses HTML forms to extract validation rules from data attributes.
+     * @class
+     *
+     * The FormParser is responsible for traversing a form's inputs and parsing out
+     * the validation rules defined via data attributes. It constructs a structured
+     * representation of these rules, including their types, messages, parameters,
+     * and priorities, which can then be used to perform client-side validation.
+     */
+    ,
+    __param(0, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.Logger)),
+    __metadata("design:paramtypes", [Object])
 ], FormParser);
 
-// Usage
-//const formParser = new FormParser(".form-create-account");
-////const validationRules = formParser.parse();
-//console.log(validationRules);
 
 
 /***/ }),
 
-/***/ "./src/Initializer.ts":
-/*!****************************!*\
-  !*** ./src/Initializer.ts ***!
-  \****************************/
+/***/ "./src/classes/Initializer.ts":
+/*!************************************!*\
+  !*** ./src/classes/Initializer.ts ***!
+  \************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -5620,7 +5312,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
 /* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/inject.js");
-/* harmony import */ var _di_container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./di/container-types */ "./src/di/container-types.ts");
+/* harmony import */ var _di_container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../di/container-types */ "./src/di/container-types.ts");
 var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -5688,10 +5380,10 @@ Initializer = __decorate([
 
 /***/ }),
 
-/***/ "./src/ObservableCollection.ts":
-/*!*************************************!*\
-  !*** ./src/ObservableCollection.ts ***!
-  \*************************************/
+/***/ "./src/classes/ObservableCollection.ts":
+/*!*********************************************!*\
+  !*** ./src/classes/ObservableCollection.ts ***!
+  \*********************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -5711,7 +5403,6 @@ var __decorate = (undefined && undefined.__decorate) || function (decorators, ta
  * The ObservableCollection class implements an observable collection
  * that allows adding and removing observers, as well as notifying them
  * of changes.
- *
  * @template T The type of items that this collection holds.
  */
 let ObservableCollection = class ObservableCollection {
@@ -5721,7 +5412,6 @@ let ObservableCollection = class ObservableCollection {
      * Adds an observer to the collection.
      *
      * If the observer is already added to the collection, it won't be added again.
-     *
      * @param {IObserver<T>} observer - The observer to be added.
      * @returns {boolean} Returns true if the observer is successfully added; otherwise, if the observer is already in the collection, returns false.
      */
@@ -5734,7 +5424,6 @@ let ObservableCollection = class ObservableCollection {
     }
     /**
      * Removes an observer from the collection.
-     *
      * @param {IObserver<T>} observer - The observer to be removed.
      * @returns {boolean} Returns true if the observer is found and removed; otherwise, false.
      */
@@ -5748,7 +5437,6 @@ let ObservableCollection = class ObservableCollection {
     }
     /**
      * Adds an item to the collection and notifies the observers of the addition.
-     *
      * @param {T} item - The item to be added to the collection.
      */
     addItem(item) {
@@ -5759,7 +5447,6 @@ let ObservableCollection = class ObservableCollection {
      * Adds multiple items to the collection and notifies the observers of the bulk addition.
      *
      * Observers are notified once, irrespective of the number of items added.
-     *
      * @param {T[]} items - An array of items to be added to the collection.
      */
     addItems(items) {
@@ -5768,7 +5455,6 @@ let ObservableCollection = class ObservableCollection {
     }
     /**
      * Finds an item in the collection that satisfies the provided function.
-     *
      * @param {(item: T) => boolean} conditionFunc - The function that new items must satisfy.
      * @returns {T | undefined} The first item in the collection that satisfies the provided function; otherwise, undefined.
      */
@@ -5777,7 +5463,6 @@ let ObservableCollection = class ObservableCollection {
     }
     /**
      * Removes an item from the collection and notifies the observers of the removal.
-     *
      * @param {T} item - The item to be removed from the collection.
      */
     removeItem(item) {
@@ -5793,7 +5478,6 @@ let ObservableCollection = class ObservableCollection {
      * This method leverages the Set data structure to efficiently identify and remove items from the collection.
      * Observers are notified once, irrespective of the number of items removed.
      * If an item is not found in the collection, it is simply ignored.
-     *
      * @param {T[]} itemsToRemove - An array of items to be removed from the collection.
      */
     removeItems(itemsToRemove) {
@@ -5807,7 +5491,6 @@ let ObservableCollection = class ObservableCollection {
      * This method accepts changes that can either be of type `IChange` (a single item change)
      * or `IBulkChange` (multiple items change). Depending on the type of change, appropriate
      * logs are printed to the console.
-     *
      * @private
      * @param {IChange<T> | IBulkChange<T>} change - The change that occurred in the collection.
      */
@@ -5824,7 +5507,6 @@ let ObservableCollection = class ObservableCollection {
     }
     /**
      * Retrieves a copy of all items in the collection.
-     *
      * @returns {T[]} An array containing all items currently in the collection.
      */
     getItems() {
@@ -5839,10 +5521,10 @@ ObservableCollection = __decorate([
 
 /***/ }),
 
-/***/ "./src/Result.ts":
-/*!***********************!*\
-  !*** ./src/Result.ts ***!
-  \***********************/
+/***/ "./src/classes/Result.ts":
+/*!*******************************!*\
+  !*** ./src/classes/Result.ts ***!
+  \*******************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -5950,82 +5632,10 @@ class Result {
 
 /***/ }),
 
-/***/ "./src/StateManager.ts":
-/*!*****************************!*\
-  !*** ./src/StateManager.ts ***!
-  \*****************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   StateManager: () => (/* binding */ StateManager)
-/* harmony export */ });
-/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
-/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/inject.js");
-/* harmony import */ var _di_container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./di/container-types */ "./src/di/container-types.ts");
-var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (undefined && undefined.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __param = (undefined && undefined.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-
-
-let StateManager = class StateManager {
-    _logger;
-    dirtyMap = {};
-    constructor(_logger) {
-        this._logger = _logger;
-        console.log("StateManager constructor");
-    }
-    makeControlDirty(controlName) {
-        this.dirtyMap[controlName] = true;
-        this._logger.getLogger().info(`Control ${controlName} is now dirty`);
-    }
-    isControlDirty(controlName) {
-        this._logger
-            .getLogger()
-            .info(`Checking if control ${controlName} is dirty`);
-        return !!this.dirtyMap[controlName];
-    }
-    clearControlDirtyState(controlName) {
-        this._logger
-            .getLogger()
-            .info(`Clearing dirty state for control ${controlName}`);
-        delete this.dirtyMap[controlName];
-    }
-    clearControlsDirtyState(controlNames) {
-        controlNames.forEach((controlName) => {
-            if (Object.prototype.hasOwnProperty.call(this.dirtyMap, controlName)) {
-                this._logger
-                    .getLogger()
-                    .info(`Clearing dirty state for control ${controlName}`);
-                delete this.dirtyMap[controlName];
-            }
-        });
-    }
-};
-StateManager = __decorate([
-    (0,inversify__WEBPACK_IMPORTED_MODULE_1__.injectable)(),
-    __param(0, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebuggingLogger)),
-    __metadata("design:paramtypes", [Object])
-], StateManager);
-
-
-
-/***/ }),
-
-/***/ "./src/ValidationControl.ts":
-/*!**********************************!*\
-  !*** ./src/ValidationControl.ts ***!
-  \**********************************/
+/***/ "./src/classes/ValidationControl.ts":
+/*!******************************************!*\
+  !*** ./src/classes/ValidationControl.ts ***!
+  \******************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -6033,7 +5643,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   ValidationControl: () => (/* binding */ ValidationControl)
 /* harmony export */ });
-/* harmony import */ var _Result__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Result */ "./src/Result.ts");
+/* harmony import */ var _Result__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Result */ "./src/classes/Result.ts");
 
 class ValidationControl {
     control;
@@ -6044,6 +5654,66 @@ class ValidationControl {
     constructor(control) {
         this.control = control;
         //this.rules = this.extractRules(control);
+    }
+    async validate(rules) {
+        let errorMessage = "";
+        let isValid = true;
+        const value = this.control.value.trim();
+        for (const rule of rules) {
+            console.log(rule);
+            switch (rule.type) {
+                case "required": {
+                    if (!value) {
+                        errorMessage = rule.message;
+                        isValid = false;
+                    }
+                    break;
+                }
+                case "length": {
+                    const { min, max } = rule.params;
+                    const valueLength = value.length;
+                    // If min or max are not defined, they won't be checked
+                    const minLength = min ? parseInt(min, 10) : null;
+                    const maxLength = max ? parseInt(max, 10) : null;
+                    // Check against minimum length if specified
+                    if (minLength !== null && valueLength < minLength) {
+                        errorMessage = rule.message;
+                        isValid = false;
+                    }
+                    // Check against maximum length if specified
+                    else if (maxLength !== null && valueLength > maxLength) {
+                        errorMessage = rule.message;
+                        isValid = false;
+                    }
+                    break;
+                }
+                case "regex": {
+                    // Ensure the pattern is provided, if not, skip this rule
+                    if (!rule.params.pattern) {
+                        break;
+                    }
+                    // Create a regular expression from the pattern string
+                    const pattern = new RegExp(rule.params.pattern);
+                    // Test the current value against the regex pattern
+                    if (!pattern.test(value)) {
+                        errorMessage = rule.message;
+                        isValid = false;
+                    }
+                    break;
+                }
+            }
+            // If already invalid, no need to check further
+            if (!isValid) {
+                break;
+            }
+        }
+        // Here we're returning a Result object with the validation result
+        const validationResult = {
+            isValid: isValid,
+            errorMessage: errorMessage,
+            control: this.control
+        };
+        return new _Result__WEBPACK_IMPORTED_MODULE_0__.Result(isValid ? validationResult : new Error(errorMessage));
     }
     /* private extractRules(
         control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -6196,217 +5866,6 @@ class ValidationControl {
         // Sort on Priority
         return rules.sort((a, b) => a.priority - b.priority);
     } */
-    async validate(rules) {
-        let errorMessage = "";
-        let isValid = true;
-        for (const rule of rules) {
-            const value = this.control.value.trim();
-            switch (rule.type) {
-                case "required":
-                    if (!value) {
-                        errorMessage = rule.message;
-                        isValid = false;
-                    }
-                    break;
-            }
-        }
-        // Sort rules based on priority before processing
-        //const sortedRules = this.rules.sort((a, b) => a.priority - b.priority);
-        /*  for (const rule of rules) {
-            const value = this.control.value.trim();
-
-            switch (rule.type) {
-            case "required":
-                if (!value) {
-                    errorMessage = rule.message;
-                    isValid = false;
-                }
-                break;
-            case "length":
-                if (
-                    (rule.maxLength !== undefined &&
-                            value.length > rule.maxLength) ||
-                        (rule.minLength !== undefined &&
-                            value.length < rule.minLength)
-                ) {
-                    errorMessage = rule.message;
-                    isValid = false;
-                }
-                break;
-            case "range": {
-                const numValue = parseFloat(value);
-                if (!isNaN(numValue)) {
-                    if (
-                        (rule.maxRange !== undefined &&
-                                numValue > rule.maxRange) ||
-                            (rule.minRange !== undefined &&
-                                numValue < rule.minRange)
-                    ) {
-                        errorMessage = rule.message;
-                        isValid = false;
-                    }
-                }
-                break;
-            }
-            case "regex":
-                if (rule.pattern && !new RegExp(rule.pattern).test(value)) {
-                    errorMessage = rule.message;
-                    isValid = false;
-                }
-                break;
-            case "compare": {
-                const compareToControlName = rule.compareTo;
-                if (compareToControlName) {
-                    const compareControl = document.querySelector(
-                        `[name='${compareToControlName}']`
-                    ) as HTMLInputElement;
-                    if (
-                        compareControl &&
-                            value !== compareControl.value.trim()
-                    ) {
-                        errorMessage = rule.message;
-                        isValid = false;
-                    }
-                }
-
-                break;
-            }
-            case "minlength":
-                if (
-                    rule.minLength !== undefined &&
-                        value.length < rule.minLength
-                ) {
-                    errorMessage = rule.message;
-                    isValid = false;
-                }
-                break;
-            case "phone": {
-                const phonePattern =
-                        /^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$/; // Simple pattern for US phone numbers
-                if (!phonePattern.test(value)) {
-                    errorMessage = rule.message;
-                    isValid = false;
-                }
-                break;
-            }
-
-            case "url": {
-                // This pattern checks for a basic valid URL (http, https, ftp)
-                const urlPattern = new RegExp(
-                    "^(https?:\\/\\/)?" + // Protocol
-                            "((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|" + // Domain name
-                            "((\\d{1,3}\\.){3}\\d{1,3}))" + // OR ip (v4) address
-                            "(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*" + // Port and path
-                            "(\\?[;&a-z\\d%_.~+=-]*)?" + // Query string
-                            "(\\#[-a-z\\d_]*)?$",
-                    "i" // Fragment locator
-                );
-
-                if (!urlPattern.test(value)) {
-                    errorMessage = rule.message;
-                    isValid = false;
-                }
-                break;
-            }
-            case "creditcard":
-                if (!this.isValidCreditCard(value)) {
-                    errorMessage = rule.message;
-                    isValid = false;
-                }
-                break;
-            case "fileextensions": {
-                const extensionsError = this.control.getAttribute(
-                    "data-val-fileextensions"
-                );
-                const allowedExtensionsAttribute =
-                        this.control.getAttribute(
-                            "data-val-fileextensions-extensions"
-                        );
-
-                if (extensionsError && allowedExtensionsAttribute) {
-                    const allowedExtensions = allowedExtensionsAttribute
-                        .split(",")
-                        .map((ext) => ext.trim().toLowerCase());
-                    const files = (this.control as HTMLInputElement).files;
-                    const fileArray = files ? Array.from(files) : [];
-                    const invalidFiles = fileArray.filter((file) => {
-                        const fileExtension = file.name
-                            .split(".")
-                            .pop()
-                            ?.toLowerCase();
-                        return (
-                            !fileExtension ||
-                                !allowedExtensions.includes(fileExtension)
-                        );
-                    });
-
-                    if (invalidFiles.length > 0) {
-                        const invalidFileNames = invalidFiles
-                            .map((file) => file.name)
-                            .join(", ");
-                        errorMessage = `${extensionsError}. The following files have invalid extensions: ${invalidFileNames}`;
-                        isValid = false;
-                    }
-                }
-                break;
-            }
-            case "remote": {
-                const url = rule.remote;
-                if (url && this.control && this.control.value) {
-                    //const paramName = this.control.value;
-                    const encodedURI = encodeURIComponent(
-                        this.control.value
-                    );
-                    const validationUrl = `${url}?${this.control.name}=${encodedURI}`;
-
-                    try {
-                        console.log(
-                            "Remote validation started with url: ",
-                            validationUrl
-                        );
-                        const response = await fetch(validationUrl, {
-                            method: "GET",
-                            headers: {
-                                "Content-Type": "application/json"
-                            }
-                        });
-
-                        if (response.ok) {
-                            const responseData = await response.json();
-                            isValid = responseData.isValid;
-                            errorMessage = rule.message;
-                        } else {
-                            throw new Error("Failed to validate remotely");
-                        }
-                    } catch (error) {
-                        console.error("Remote validation error:", error);
-                        isValid = false;
-                        errorMessage = "Error during remote validation.";
-                    }
-                }
-                break;
-            }
-            case "email": {
-                // A common regex pattern for validating an email address
-                const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-                // Perform regex email validation
-                if (!emailPattern.test(this.control.value)) {
-                    errorMessage = rule.message || "Invalid email address.";
-                    isValid = false;
-                }
-                break;
-            }
-            }
-
-            if (!isValid) break;
-        } */
-        return new _Result__WEBPACK_IMPORTED_MODULE_0__.Result({
-            isValid: isValid,
-            errorMessage: errorMessage,
-            control: this.control
-        });
-    }
     isValidCreditCard(value) {
         // Remove all non-digit characters from the string
         const numericOnly = value.replace(/\D/g, "");
@@ -6447,20 +5906,20 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/container/container.js");
 /* harmony import */ var _container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./container-types */ "./src/di/container-types.ts");
-/* harmony import */ var _logger_debuggingLogger__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../logger/debuggingLogger */ "./src/logger/debuggingLogger.ts");
-/* harmony import */ var _services_loggerService__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../services/loggerService */ "./src/services/loggerService.ts");
-/* harmony import */ var _Initializer__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../Initializer */ "./src/Initializer.ts");
-/* harmony import */ var _EventEmitter__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../EventEmitter */ "./src/EventEmitter.ts");
-/* harmony import */ var _FormFactory__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../FormFactory */ "./src/FormFactory.ts");
-/* harmony import */ var _ObservableCollection__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../ObservableCollection */ "./src/ObservableCollection.ts");
-/* harmony import */ var _DebouncerFactory__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../DebouncerFactory */ "./src/DebouncerFactory.ts");
-/* harmony import */ var _FormManager__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../FormManager */ "./src/FormManager.ts");
-/* harmony import */ var _services_EventService__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../services/EventService */ "./src/services/EventService.ts");
-/* harmony import */ var _StateManager__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../StateManager */ "./src/StateManager.ts");
-/* harmony import */ var _DebounceManager__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../DebounceManager */ "./src/DebounceManager.ts");
-/* harmony import */ var _services_ValidationService__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../services/ValidationService */ "./src/services/ValidationService.ts");
-/* harmony import */ var _FormObserver__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ../FormObserver */ "./src/FormObserver.ts");
-/* harmony import */ var _FormParser__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ../FormParser */ "./src/FormParser.ts");
+/* harmony import */ var _logging_Logger__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../logging/Logger */ "./src/logging/Logger.ts");
+/* harmony import */ var _classes_EventEmitter__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../classes/EventEmitter */ "./src/classes/EventEmitter.ts");
+/* harmony import */ var _services_EventService__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../services/EventService */ "./src/services/EventService.ts");
+/* harmony import */ var _managers_StateManager__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../managers/StateManager */ "./src/managers/StateManager.ts");
+/* harmony import */ var _logging_DebuggingLogger__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../logging/DebuggingLogger */ "./src/logging/DebuggingLogger.ts");
+/* harmony import */ var _managers_FormManager__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../managers/FormManager */ "./src/managers/FormManager.ts");
+/* harmony import */ var _classes_Initializer__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../classes/Initializer */ "./src/classes/Initializer.ts");
+/* harmony import */ var _classes_FormParser__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../classes/FormParser */ "./src/classes/FormParser.ts");
+/* harmony import */ var _classes_FormObserver__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../classes/FormObserver */ "./src/classes/FormObserver.ts");
+/* harmony import */ var _factory_FormFactory__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../factory/FormFactory */ "./src/factory/FormFactory.ts");
+/* harmony import */ var _classes_ObservableCollection__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../classes/ObservableCollection */ "./src/classes/ObservableCollection.ts");
+/* harmony import */ var _managers_DebounceManager__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../managers/DebounceManager */ "./src/managers/DebounceManager.ts");
+/* harmony import */ var _factory_DebouncerFactory__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ../factory/DebouncerFactory */ "./src/factory/DebouncerFactory.ts");
+/* harmony import */ var _services_ValidationService__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ../services/ValidationService */ "./src/services/ValidationService.ts");
 
 
 
@@ -6478,63 +5937,53 @@ __webpack_require__.r(__webpack_exports__);
 
 
 const container = new inversify__WEBPACK_IMPORTED_MODULE_15__.Container();
-container
-    .bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.Logger)
-    .to(_services_loggerService__WEBPACK_IMPORTED_MODULE_2__.LoggerService)
-    .inSingletonScope();
+container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.Logger).to(_logging_Logger__WEBPACK_IMPORTED_MODULE_1__.Logger).inSingletonScope();
 container
     .bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventEmitter)
-    .to((_EventEmitter__WEBPACK_IMPORTED_MODULE_4__.EventEmitter))
+    .to((_classes_EventEmitter__WEBPACK_IMPORTED_MODULE_2__.EventEmitter))
     .inRequestScope();
-container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventService).to(_services_EventService__WEBPACK_IMPORTED_MODULE_9__.EventService)
+container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventService).to(_services_EventService__WEBPACK_IMPORTED_MODULE_3__.EventService)
     .inSingletonScope;
 container
     .bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.StateManager)
-    .to(_StateManager__WEBPACK_IMPORTED_MODULE_10__.StateManager)
+    .to(_managers_StateManager__WEBPACK_IMPORTED_MODULE_4__.StateManager)
     .inSingletonScope();
 container
     .bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebuggingLogger)
-    .to(_logger_debuggingLogger__WEBPACK_IMPORTED_MODULE_1__.DebuggingLogger)
+    .to(_logging_DebuggingLogger__WEBPACK_IMPORTED_MODULE_5__.DebuggingLogger)
     .inRequestScope();
 container
     .bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.Initializer)
-    .to(_Initializer__WEBPACK_IMPORTED_MODULE_3__.Initializer)
+    .to(_classes_Initializer__WEBPACK_IMPORTED_MODULE_7__.Initializer)
     .inSingletonScope();
 container
     .bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormManager)
-    .to(_FormManager__WEBPACK_IMPORTED_MODULE_8__.FormManager)
+    .to(_managers_FormManager__WEBPACK_IMPORTED_MODULE_6__.FormManager)
     .inSingletonScope();
-container
-    .bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormParser)
-    .to(_FormParser__WEBPACK_IMPORTED_MODULE_14__.FormParser)
-    .inSingletonScope();
+container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormParser).to(_classes_FormParser__WEBPACK_IMPORTED_MODULE_8__.FormParser).inSingletonScope();
 container
     .bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormObserver)
-    .to(_FormObserver__WEBPACK_IMPORTED_MODULE_13__.FormObserver)
+    .to(_classes_FormObserver__WEBPACK_IMPORTED_MODULE_9__.FormObserver)
     .inSingletonScope();
 container
     .bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormFactory)
-    .to(_FormFactory__WEBPACK_IMPORTED_MODULE_5__.FormFactory)
+    .to(_factory_FormFactory__WEBPACK_IMPORTED_MODULE_10__.FormFactory)
     .inSingletonScope();
 container
     .bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ObservableFormsCollection)
-    .to((_ObservableCollection__WEBPACK_IMPORTED_MODULE_6__.ObservableCollection))
+    .to((_classes_ObservableCollection__WEBPACK_IMPORTED_MODULE_11__.ObservableCollection))
     .inSingletonScope();
 container
     .bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebouncerManager)
-    .to(_DebounceManager__WEBPACK_IMPORTED_MODULE_11__.DebouncerManager)
+    .to(_managers_DebounceManager__WEBPACK_IMPORTED_MODULE_12__.DebouncerManager)
     .inSingletonScope();
 container
     .bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebouncerFactory)
-    .to(_DebouncerFactory__WEBPACK_IMPORTED_MODULE_7__.DebouncerFactory)
+    .to(_factory_DebouncerFactory__WEBPACK_IMPORTED_MODULE_13__.DebouncerFactory)
     .inSingletonScope();
-//container
-//    .bind<IValidationRuleRegistry>(TYPES.ValidationRulesRegistry)
-//    .to(ValidationRuleRegistry)
-//    .inSingletonScope();
 container
     .bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ValidationService)
-    .to(_services_ValidationService__WEBPACK_IMPORTED_MODULE_12__.ValidationService)
+    .to(_services_ValidationService__WEBPACK_IMPORTED_MODULE_14__.ValidationService)
     .inSingletonScope();
 
 
@@ -6575,10 +6024,118 @@ const TYPES = {
 
 /***/ }),
 
-/***/ "./src/logger/debuggingLogger.ts":
-/*!***************************************!*\
-  !*** ./src/logger/debuggingLogger.ts ***!
-  \***************************************/
+/***/ "./src/factory/DebouncerFactory.ts":
+/*!*****************************************!*\
+  !*** ./src/factory/DebouncerFactory.ts ***!
+  \*****************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   DebouncerFactory: () => (/* binding */ DebouncerFactory)
+/* harmony export */ });
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
+/* harmony import */ var _utils_Debouncer__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils/Debouncer */ "./src/utils/Debouncer.ts");
+var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (undefined && undefined.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+
+
+/**
+ * A factory for creating instances of `Debouncer`.
+ *
+ * The `DebouncerFactory` class implements the `IDebouncerFactory` interface
+ * and is responsible for providing a method to create new `Debouncer` objects.
+ * This class uses the `@injectable` decorator to allow it to be injected into
+ * other components, enhancing modularity and testability.
+ * @see {@link IDebouncerFactory} for interface documentation.
+ */
+let DebouncerFactory = class DebouncerFactory {
+    constructor() {
+        console.log("DebouncerFactory constructor");
+    }
+    /**
+     * Creates a new instance of `Debouncer`.
+     *
+     * This method implements the `create` method from the `IDebouncerFactory` interface.
+     * It allows consumers to obtain a fresh instance of `Debouncer` without needing to know
+     * the details of how the `Debouncer` is constructed.
+     * @returns {IDebouncer} An instance of `Debouncer` which can be used to debounce function calls.
+     */
+    create() {
+        return new _utils_Debouncer__WEBPACK_IMPORTED_MODULE_0__.Debouncer();
+    }
+};
+DebouncerFactory = __decorate([
+    (0,inversify__WEBPACK_IMPORTED_MODULE_1__.injectable)(),
+    __metadata("design:paramtypes", [])
+], DebouncerFactory);
+
+
+
+/***/ }),
+
+/***/ "./src/factory/FormFactory.ts":
+/*!************************************!*\
+  !*** ./src/factory/FormFactory.ts ***!
+  \************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   FormFactory: () => (/* binding */ FormFactory)
+/* harmony export */ });
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
+/* harmony import */ var _classes_Result__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../classes/Result */ "./src/classes/Result.ts");
+/* harmony import */ var _classes_Form__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../classes/Form */ "./src/classes/Form.ts");
+var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (undefined && undefined.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+
+
+
+let FormFactory = class FormFactory {
+    constructor() { }
+    create(formElement) {
+        try {
+            if (formElement === undefined) {
+                return new _classes_Result__WEBPACK_IMPORTED_MODULE_0__.Result(new Error("Form Element Is Undefined"));
+            }
+            const form = new _classes_Form__WEBPACK_IMPORTED_MODULE_1__.Form(formElement);
+            return new _classes_Result__WEBPACK_IMPORTED_MODULE_0__.Result(form);
+        }
+        catch (error) {
+            return new _classes_Result__WEBPACK_IMPORTED_MODULE_0__.Result(error);
+        }
+    }
+};
+FormFactory = __decorate([
+    (0,inversify__WEBPACK_IMPORTED_MODULE_2__.injectable)(),
+    __metadata("design:paramtypes", [])
+], FormFactory);
+
+
+
+/***/ }),
+
+/***/ "./src/logging/DebuggingLogger.ts":
+/*!****************************************!*\
+  !*** ./src/logging/DebuggingLogger.ts ***!
+  \****************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -6643,6 +6200,423 @@ DebuggingLogger = __decorate([
     __param(1, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.Options)),
     __metadata("design:paramtypes", [Object, Object])
 ], DebuggingLogger);
+
+
+
+/***/ }),
+
+/***/ "./src/logging/Logger.ts":
+/*!*******************************!*\
+  !*** ./src/logging/Logger.ts ***!
+  \*******************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Logger: () => (/* binding */ Logger)
+/* harmony export */ });
+/* harmony import */ var loglevel__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! loglevel */ "./node_modules/loglevel/lib/loglevel.js");
+/* harmony import */ var loglevel__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(loglevel__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
+var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (undefined && undefined.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+
+
+let Logger = class Logger {
+    constructor() {
+        console.log("LoggerService constructor");
+        loglevel__WEBPACK_IMPORTED_MODULE_0__.setLevel(loglevel__WEBPACK_IMPORTED_MODULE_0__.levels.INFO);
+    }
+    get levels() {
+        return loglevel__WEBPACK_IMPORTED_MODULE_0__.levels; // Assuming 'levels' is accessible and refers to the corresponding property in 'loglevel'.
+    }
+    get methodFactory() {
+        return loglevel__WEBPACK_IMPORTED_MODULE_0__.methodFactory; // Delegates to the actual 'methodFactory' in 'loglevel'.
+    }
+    getLevel() {
+        return loglevel__WEBPACK_IMPORTED_MODULE_0__.getLevel();
+    }
+    trace(...msg) {
+        loglevel__WEBPACK_IMPORTED_MODULE_0__.trace(...msg);
+    }
+    debug(...msg) {
+        loglevel__WEBPACK_IMPORTED_MODULE_0__.debug(...msg);
+    }
+    log(...msg) {
+        // 'log' method is not standard in 'loglevel'. If you need a generic log, you could map to a specific level, or remove this.
+        loglevel__WEBPACK_IMPORTED_MODULE_0__.info(...msg); // Example mapping to 'info' level.
+    }
+    info(...msg) {
+        loglevel__WEBPACK_IMPORTED_MODULE_0__.info(...msg);
+    }
+    warn(...msg) {
+        loglevel__WEBPACK_IMPORTED_MODULE_0__.warn(...msg);
+    }
+    error(...msg) {
+        loglevel__WEBPACK_IMPORTED_MODULE_0__.error(...msg);
+    }
+    setLevel(level, persist) {
+        loglevel__WEBPACK_IMPORTED_MODULE_0__.setLevel(level, persist);
+    }
+    setDefaultLevel(level) {
+        loglevel__WEBPACK_IMPORTED_MODULE_0__.setDefaultLevel(level);
+    }
+    resetLevel() {
+        loglevel__WEBPACK_IMPORTED_MODULE_0__.setDefaultLevel(loglevel__WEBPACK_IMPORTED_MODULE_0__.levels.SILENT); // or another appropriate default
+    }
+    enableAll(persist) {
+        loglevel__WEBPACK_IMPORTED_MODULE_0__.enableAll(persist);
+    }
+    disableAll(persist) {
+        loglevel__WEBPACK_IMPORTED_MODULE_0__.disableAll(persist);
+    }
+};
+Logger = __decorate([
+    (0,inversify__WEBPACK_IMPORTED_MODULE_1__.injectable)(),
+    __metadata("design:paramtypes", [])
+], Logger);
+
+
+
+/***/ }),
+
+/***/ "./src/managers/DebounceManager.ts":
+/*!*****************************************!*\
+  !*** ./src/managers/DebounceManager.ts ***!
+  \*****************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   DebouncerManager: () => (/* binding */ DebouncerManager)
+/* harmony export */ });
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/inject.js");
+/* harmony import */ var _di_container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../di/container-types */ "./src/di/container-types.ts");
+var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (undefined && undefined.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (undefined && undefined.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+
+
+let DebouncerManager = class DebouncerManager {
+    _debounceFactory;
+    debouncers = {};
+    constructor(_debounceFactory) {
+        this._debounceFactory = _debounceFactory;
+        console.log("DebouncerManager constructor");
+    }
+    getDebouncerForControl(controlName) {
+        if (!this.debouncers[controlName]) {
+            this.debouncers[controlName] = this._debounceFactory.create();
+        }
+        return this.debouncers[controlName];
+    }
+    clearDebouncersForControl(controlName) {
+        const debouncer = this.debouncers[controlName];
+        if (debouncer) {
+            debouncer.cancel(); // Assuming the debouncer has a cancel method
+            delete this.debouncers[controlName];
+        }
+    }
+    clearDebouncersForControls(controlNames) {
+        controlNames.forEach((controlName) => {
+            if (Object.prototype.hasOwnProperty.call(this.debouncers, controlName)) {
+                this.debouncers[controlName].cancel();
+                delete this.debouncers[controlName];
+            }
+        });
+    }
+};
+DebouncerManager = __decorate([
+    (0,inversify__WEBPACK_IMPORTED_MODULE_1__.injectable)(),
+    __param(0, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebouncerFactory)),
+    __metadata("design:paramtypes", [Object])
+], DebouncerManager);
+
+
+
+/***/ }),
+
+/***/ "./src/managers/FormManager.ts":
+/*!*************************************!*\
+  !*** ./src/managers/FormManager.ts ***!
+  \*************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   FormManager: () => (/* binding */ FormManager)
+/* harmony export */ });
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/inject.js");
+/* harmony import */ var _di_container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../di/container-types */ "./src/di/container-types.ts");
+/* harmony import */ var _classes_Result__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../classes/Result */ "./src/classes/Result.ts");
+var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (undefined && undefined.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (undefined && undefined.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+
+
+
+let FormManager = class FormManager {
+    _formsCollection;
+    _formFactory;
+    _eventEmitter;
+    _logger;
+    mutationObserver = null;
+    /**
+     * Constructs the FormManager instance responsible for managing form instances.
+     * It utilizes dependency injection to incorporate various services such as
+     * form collection management, form creation, event emission, and logging.
+     * @param {IObservableCollection<IForm>} _formsCollection - An observable collection that maintains the forms.
+     * @param {IFormFactory} _formFactory - A factory service for creating new form instances.
+     * @param {IEventEmitter<any>} _eventEmitter - An event emitter service to handle form-related events.
+     * @param {IDecoratedLogger} _logger - A logging service for error and debug reporting.
+     */
+    constructor(_formsCollection, _formFactory, _eventEmitter, _logger) {
+        this._formsCollection = _formsCollection;
+        this._formFactory = _formFactory;
+        this._eventEmitter = _eventEmitter;
+        this._logger = _logger;
+    }
+    /**
+     * Initializes form management by creating form instances from existing DOM
+     * and setting up a mutation observer for new forms added to the DOM.
+     */
+    init() {
+        this.createForms();
+    }
+    /**
+     * Processes mutation records from a `MutationObserver` and adds any detected new form elements to the form manager.
+     * It distinguishes between forms added directly under the observed node and forms nested within other elements.
+     * @param {MutationRecord[]} mutationsList - An array of `MutationRecord` objects representing individual mutations.
+     * The method iterates over this list, looking for mutations of the `childList` type, which indicate added or removed nodes.
+     * @example
+     * // Typically not called directly, but used as a callback for MutationObserver:
+     * const observer = new MutationObserver(handleFormMutations);
+     * observer.observe(document.body, { childList: true, subtree: true });
+     *
+     * // Could also be called manually in a testing context:
+     * handleFormMutations([
+     *   {
+     *     type: 'childList',
+     *     addedNodes: [document.createElement('form')],
+     *     removedNodes: [],
+     *     // other MutationRecord properties...
+     *   }
+     * ]);
+     * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver} for more information on `MutationObserver`.
+     * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/MutationRecord} for details on `MutationRecord`.
+     */
+    handleFormMutations(mutationsList) {
+        try {
+            for (const mutation of mutationsList) {
+                if (mutation.type === "childList") {
+                    // Process direct forms
+                    const directForms = Array.from(mutation.addedNodes).filter((node) => node instanceof HTMLFormElement);
+                    for (const form of directForms) {
+                        this.addForm(form);
+                    }
+                    // Process nested forms
+                    const nestedForms = Array.from(mutation.addedNodes)
+                        .filter((node) => node instanceof HTMLElement)
+                        .flatMap((node) => Array.from(node.querySelectorAll("form")));
+                    for (const form of nestedForms) {
+                        this.addForm(form);
+                    }
+                }
+            }
+        }
+        catch (error) {
+            // If error is an instance of Error, log its message; otherwise, log the error directly
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this._logger
+                .getLogger()
+                .error(`Error in handleFormMutations: ${errorMessage}`);
+        }
+    }
+    /**
+     * Attempts to add a form to the forms collection.
+     * If the form does not have any data-val attributes, it is ignored.
+     * If the form is successfully created and added to the collection,
+     * a "formAdded" event is emitted.
+     * @param {HTMLFormElement} formElement - The HTML form element to be added to the collection.
+     * @throws Will log an error to the injected logger if the form creation fails or an unexpected error occurs.
+     */
+    addForm(formElement) {
+        try {
+            // Get an array of form elements
+            const elements = Array.from(formElement.elements);
+            if (elements.length === 0) {
+                return;
+            }
+            // If the elements to not have a data-val attribute, return
+            if (!elements.some((element) => element.hasAttribute("data-val"))) {
+                return;
+            }
+            const formResults = this._formFactory.create(formElement);
+            if (!formResults.isSuccess) {
+                const error = _classes_Result__WEBPACK_IMPORTED_MODULE_1__.Result.handleError(formResults);
+                this._logger
+                    .getLogger()
+                    .error(`FormManager: addForm: ${error}`);
+                return;
+            }
+            const formResult = _classes_Result__WEBPACK_IMPORTED_MODULE_1__.Result.handleSuccess(formResults);
+            if (formResult === undefined) {
+                this._logger
+                    .getLogger()
+                    .error("FormManager: addForm: formResult is undefined");
+                return;
+            }
+            this._formsCollection.addItem(formResult);
+            this._eventEmitter.emit("formAdded", formResult);
+        }
+        catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this._logger
+                .getLogger()
+                .error(`FormManager: addForm: Unexpected error: ${errorMessage}`);
+        }
+    }
+    /**
+     * Iterates over all form elements present in the document and attempts
+     * to add each one to the forms collection using the addForm method.
+     * Errors during the addition of individual forms are logged and do not
+     * halt the process for subsequent forms.
+     */
+    createForms() {
+        const forms = document.querySelectorAll("form");
+        const formsArray = Array.from(forms);
+        for (const formElement of formsArray) {
+            try {
+                this.addForm(formElement);
+            }
+            catch (error) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                this._logger
+                    .getLogger()
+                    .error(`FormManager: createForms: Error when adding form: ${errorMessage}`);
+                // Optionally continue to next form or handle the error accordingly
+            }
+        }
+    }
+};
+FormManager = __decorate([
+    (0,inversify__WEBPACK_IMPORTED_MODULE_2__.injectable)()
+    /**
+     * Manages form instances within the application, including the creation
+     * of form objects and the observation of DOM mutations for dynamically
+     * added forms.
+     * @class
+     * @implements {IFormManager}
+     */
+    ,
+    __param(0, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ObservableFormsCollection)),
+    __param(1, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormFactory)),
+    __param(2, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventEmitter)),
+    __param(3, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebuggingLogger)),
+    __metadata("design:paramtypes", [Object, Object, Object, Object])
+], FormManager);
+
+
+
+/***/ }),
+
+/***/ "./src/managers/StateManager.ts":
+/*!**************************************!*\
+  !*** ./src/managers/StateManager.ts ***!
+  \**************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   StateManager: () => (/* binding */ StateManager)
+/* harmony export */ });
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/inject.js");
+/* harmony import */ var _di_container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../di/container-types */ "./src/di/container-types.ts");
+var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (undefined && undefined.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (undefined && undefined.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+
+
+let StateManager = class StateManager {
+    _logger;
+    dirtyMap = {};
+    constructor(_logger) {
+        this._logger = _logger;
+        console.log("StateManager constructor");
+    }
+    makeControlDirty(controlName) {
+        this.dirtyMap[controlName] = true;
+        this._logger.getLogger().info(`Control ${controlName} is now dirty`);
+    }
+    isControlDirty(controlName) {
+        this._logger
+            .getLogger()
+            .info(`Checking if control ${controlName} is dirty`);
+        return !!this.dirtyMap[controlName];
+    }
+    clearControlDirtyState(controlName) {
+        this._logger
+            .getLogger()
+            .info(`Clearing dirty state for control ${controlName}`);
+        delete this.dirtyMap[controlName];
+    }
+    clearControlsDirtyState(controlNames) {
+        controlNames.forEach((controlName) => {
+            if (Object.prototype.hasOwnProperty.call(this.dirtyMap, controlName)) {
+                this._logger
+                    .getLogger()
+                    .info(`Clearing dirty state for control ${controlName}`);
+                delete this.dirtyMap[controlName];
+            }
+        });
+    }
+};
+StateManager = __decorate([
+    (0,inversify__WEBPACK_IMPORTED_MODULE_1__.injectable)(),
+    __param(0, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebuggingLogger)),
+    __metadata("design:paramtypes", [Object])
+], StateManager);
 
 
 
@@ -6882,8 +6856,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
 /* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/inject.js");
 /* harmony import */ var _di_container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../di/container-types */ "./src/di/container-types.ts");
-/* harmony import */ var _ValidationControl__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../ValidationControl */ "./src/ValidationControl.ts");
-/* harmony import */ var _Result__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../Result */ "./src/Result.ts");
+/* harmony import */ var _classes_ValidationControl__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../classes/ValidationControl */ "./src/classes/ValidationControl.ts");
+/* harmony import */ var _classes_Result__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../classes/Result */ "./src/classes/Result.ts");
 var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -6908,32 +6882,32 @@ let ValidationService = class ValidationService {
         this._formParser = _formParser;
     }
     async validateControl(control) {
-        const validationControl = new _ValidationControl__WEBPACK_IMPORTED_MODULE_1__.ValidationControl(control);
+        const validationControl = new _classes_ValidationControl__WEBPACK_IMPORTED_MODULE_1__.ValidationControl(control);
         const getValidationInformationResults = this._formParser.getValidationInformation(control);
         if (!getValidationInformationResults.isSuccess) {
-            const error = _Result__WEBPACK_IMPORTED_MODULE_2__.Result.handleError(getValidationInformationResults);
+            const error = _classes_Result__WEBPACK_IMPORTED_MODULE_2__.Result.handleError(getValidationInformationResults);
             this._logger.getLogger().error(error);
         }
-        const getValidationRulesResult = _Result__WEBPACK_IMPORTED_MODULE_2__.Result.handleSuccess(getValidationInformationResults);
+        const getValidationRulesResult = _classes_Result__WEBPACK_IMPORTED_MODULE_2__.Result.handleSuccess(getValidationInformationResults);
         if (getValidationRulesResult === undefined) {
             this._logger.getLogger().error("Validation rules are undefined");
             return;
         }
         // Destructure the getValidationRulesResult
         const { rules } = getValidationRulesResult;
-        console.log(rules);
         const validationResults = await validationControl.validate(rules);
         if (!validationResults.isSuccess) {
-            const error = _Result__WEBPACK_IMPORTED_MODULE_2__.Result.handleError(validationResults);
-            this._logger.getLogger().error(error);
+            const error = _classes_Result__WEBPACK_IMPORTED_MODULE_2__.Result.handleError(validationResults);
+            // This is where we pass the error to the UIHandler we have not coded yet!!
+            this._logger.getLogger().info("Validation Error:", error);
             return;
         }
-        const validationResult = _Result__WEBPACK_IMPORTED_MODULE_2__.Result.handleSuccess(validationResults);
+        const validationResult = _classes_Result__WEBPACK_IMPORTED_MODULE_2__.Result.handleSuccess(validationResults);
         if (validationResult === undefined) {
             this._logger.getLogger().error("Validation result is undefined");
             return;
         }
-        console.log(validationResult.control.parentNode);
+        console.log(validationResult);
     }
 };
 ValidationService = __decorate([
@@ -6947,93 +6921,10 @@ ValidationService = __decorate([
 
 /***/ }),
 
-/***/ "./src/services/loggerService.ts":
-/*!***************************************!*\
-  !*** ./src/services/loggerService.ts ***!
-  \***************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   LoggerService: () => (/* binding */ LoggerService)
-/* harmony export */ });
-/* harmony import */ var loglevel__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! loglevel */ "./node_modules/loglevel/lib/loglevel.js");
-/* harmony import */ var loglevel__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(loglevel__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
-var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (undefined && undefined.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-
-
-let LoggerService = class LoggerService {
-    constructor() {
-        console.log("LoggerService constructor");
-        loglevel__WEBPACK_IMPORTED_MODULE_0__.setLevel(loglevel__WEBPACK_IMPORTED_MODULE_0__.levels.INFO);
-    }
-    get levels() {
-        return loglevel__WEBPACK_IMPORTED_MODULE_0__.levels; // Assuming 'levels' is accessible and refers to the corresponding property in 'loglevel'.
-    }
-    get methodFactory() {
-        return loglevel__WEBPACK_IMPORTED_MODULE_0__.methodFactory; // Delegates to the actual 'methodFactory' in 'loglevel'.
-    }
-    getLevel() {
-        return loglevel__WEBPACK_IMPORTED_MODULE_0__.getLevel();
-    }
-    trace(...msg) {
-        loglevel__WEBPACK_IMPORTED_MODULE_0__.trace(...msg);
-    }
-    debug(...msg) {
-        loglevel__WEBPACK_IMPORTED_MODULE_0__.debug(...msg);
-    }
-    log(...msg) {
-        // 'log' method is not standard in 'loglevel'. If you need a generic log, you could map to a specific level, or remove this.
-        loglevel__WEBPACK_IMPORTED_MODULE_0__.info(...msg); // Example mapping to 'info' level.
-    }
-    info(...msg) {
-        loglevel__WEBPACK_IMPORTED_MODULE_0__.info(...msg);
-    }
-    warn(...msg) {
-        loglevel__WEBPACK_IMPORTED_MODULE_0__.warn(...msg);
-    }
-    error(...msg) {
-        loglevel__WEBPACK_IMPORTED_MODULE_0__.error(...msg);
-    }
-    setLevel(level, persist) {
-        loglevel__WEBPACK_IMPORTED_MODULE_0__.setLevel(level, persist);
-    }
-    setDefaultLevel(level) {
-        loglevel__WEBPACK_IMPORTED_MODULE_0__.setDefaultLevel(level);
-    }
-    resetLevel() {
-        loglevel__WEBPACK_IMPORTED_MODULE_0__.setDefaultLevel(loglevel__WEBPACK_IMPORTED_MODULE_0__.levels.SILENT); // or another appropriate default
-    }
-    enableAll(persist) {
-        loglevel__WEBPACK_IMPORTED_MODULE_0__.enableAll(persist);
-    }
-    disableAll(persist) {
-        loglevel__WEBPACK_IMPORTED_MODULE_0__.disableAll(persist);
-    }
-};
-LoggerService = __decorate([
-    (0,inversify__WEBPACK_IMPORTED_MODULE_1__.injectable)(),
-    __metadata("design:paramtypes", [])
-], LoggerService);
-
-
-
-/***/ }),
-
-/***/ "./src/util/Debouncer.ts":
-/*!*******************************!*\
-  !*** ./src/util/Debouncer.ts ***!
-  \*******************************/
+/***/ "./src/utils/Debouncer.ts":
+/*!********************************!*\
+  !*** ./src/utils/Debouncer.ts ***!
+  \********************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -7070,7 +6961,6 @@ let Debouncer = class Debouncer {
      * This method takes a function and a wait time in milliseconds. It will delay the execution of the function
      * until after the wait time has elapsed since the last call to debounce. Subsequent calls to debounce
      * with a new function will cancel any pending execution from previous calls.
-     *
      * @template T - The type of the function to debounce.
      * @param {T} func - The function to be debounced.
      * @param {number} waitMilliseconds - The number of milliseconds to wait before calling the function.
@@ -7227,21 +7117,17 @@ class UnobtrusiveValidation {
                 .info("UnobtrusiveValidation already initialized, skipping...");
             return;
         }
-        // ...existing initialization logic...
         this._initialized = true;
-        console.log("UnobtrusiveValidation init");
-        // Initialization logic here
+        // Contaianer is already has options bound, unbind them
         if (_di_container_config__WEBPACK_IMPORTED_MODULE_1__.container.isBound(_di_container_types__WEBPACK_IMPORTED_MODULE_2__.TYPES.Options)) {
             _di_container_config__WEBPACK_IMPORTED_MODULE_1__.container.unbind(_di_container_types__WEBPACK_IMPORTED_MODULE_2__.TYPES.Options);
         }
         // Bind the options to the container
         _di_container_config__WEBPACK_IMPORTED_MODULE_1__.container.bind(_di_container_types__WEBPACK_IMPORTED_MODULE_2__.TYPES.Options).toConstantValue(this._options);
-        //const t = container.get<IEventService>(TYPES.EventService);
         // Get the logger from the container
         this._logger = _di_container_config__WEBPACK_IMPORTED_MODULE_1__.container.get(_di_container_types__WEBPACK_IMPORTED_MODULE_2__.TYPES.DebuggingLogger);
         // Get the initializer from the container
         this._initializer = _di_container_config__WEBPACK_IMPORTED_MODULE_1__.container.get(_di_container_types__WEBPACK_IMPORTED_MODULE_2__.TYPES.Initializer);
-        this._logger.getLogger().info("UnobtrusiveValidation initialized");
         // Initialize the initializer
         await this._initializer.init();
         this._initialized = true;
@@ -7269,7 +7155,7 @@ class UnobtrusiveValidation {
         }
         // Update the internal options with the new settings.
         this._options = { ...this._options, ...options };
-        // You may want to check for specific options that require re-initialization.
+        // check for specific options that require re-initialization.
         if (options.autoInit !== undefined) {
             if (options.autoInit) {
                 // Call the init method to re-initialize.
