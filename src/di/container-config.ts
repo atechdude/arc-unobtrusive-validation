@@ -87,10 +87,10 @@ container
     .bind<IDebouncerFactory>(TYPES.DebouncerFactory)
     .to(DebouncerFactory)
     .inSingletonScope();
-container
-    .bind<IValidationRuleRegistry>(TYPES.ValidationRulesRegistry)
-    .to(ValidationRuleRegistry)
-    .inSingletonScope();
+//container
+//    .bind<IValidationRuleRegistry>(TYPES.ValidationRulesRegistry)
+//    .to(ValidationRuleRegistry)
+//    .inSingletonScope();
 container
     .bind<IValidationService>(TYPES.ValidationService)
     .to(ValidationService)

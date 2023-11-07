@@ -3,13 +3,13 @@
   "version": "1.0.0",
   "description": "",
   "main": "arc-unobtrusive-validation.js",
-  "scripts": {
-    "lint": "eslint \"src/**/*.{js,ts,tsx}\"",
-    "build": "tsc",
-    "webpack-build": "webpack --mode development",
-    "webpack-start": "webpack --watch --mode development",
-    "copy-dist": "xcopy \"C:\\Visual Studio Projects\\typescriptprojects\\arc-unobtrusive-validation\\dist\\arc-unobtrusive-validation.js\" \"C:\\Visual Studio Projects\\DfwForSale\\WebUI\\wwwroot\\lib\\arc-unobtrusive-validation\\dist\" /Y && xcopy \"C:\\Visual Studio Projects\\typescriptprojects\\arc-unobtrusive-validation\\dist\\arc-unobtrusive-validation.js.map\" \"C:\\Visual Studio Projects\\DfwForSale\\WebUI\\wwwroot\\lib\\arc-unobtrusive-validation\\dist\" /Y"
-  },
+    "scripts": {
+        "lint": "eslint \"src/**/*.{js,ts,tsx}\"",
+        "build": "tsc",
+        "webpack-build": "webpack --mode development",
+        "webpack-start": "webpack --watch --mode development",
+        "copy-dist": "xcopy \"C:\\Visual Studio Projects\\DFWForSale\\ArcValidation\\dist\\arc-unobtrusive-validation.js\" \"C:\\Visual Studio Projects\\DfwForSale\\WebUI\\wwwroot\\lib\\arc-unobtrusive-validation\\dist\" /Y && xcopy \"C:\\Visual Studio Projects\\DFWForSale\\ArcValidation\\dist\\arc-unobtrusive-validation.js.map\" \"C:\\Visual Studio Projects\\DfwForSale\\WebUI\\wwwroot\\lib\\arc-unobtrusive-validation\\dist\" /Y"
+    },
   "author": "",
   "license": "ISC",
   "devDependencies": {

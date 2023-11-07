@@ -1,41 +1,13 @@
 ﻿import { Result } from "./Result";
 import { IValidationControl, IValidationResult, IValidationRule } from "./interfaces";
 
-type ValidationRule = {
-    type:
-        | "required"
-        | "length"
-        | "range"
-        | "regex"
-        | "compare"
-        | "minlength"
-        | "phone"
-        | "url"
-        | "creditcard"
-        | "fileextensions"
-        | "remote"
-        | "email";
-    message: string;
-    priority: number;
-    maxLength?: number;
-    minLength?: number;
-    maclength?: number;
-    maxRange?: number;
-    minRange?: number;
-    pattern?: string;
-    compareTo?: string;
-    phone?: string;
-    url?: string;
-    creditcard?: string;
-    extensions?: string;
-    additionalFields?: string;
-    remote?: string;
-    email?: string;
-};
+
 
 export class ValidationControl implements IValidationControl {
     control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
     isInteracted: boolean = false;
+    validationRules: IValidationRule[] = [];
+    isValid: boolean = false;
     //rules: ValidationRule[];
 
     constructor(
@@ -44,6 +16,7 @@ export class ValidationControl implements IValidationControl {
         this.control = control;
         //this.rules = this.extractRules(control);
     }
+
 
     /* private extractRules(
         control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -196,11 +169,19 @@ export class ValidationControl implements IValidationControl {
         // Sort on Priority
         return rules.sort((a, b) => a.priority - b.priority);
     } */
-    async validate(rules:IValidationRule[]): Promise<Result<IValidationResult>> {
-        const errorMessage = "";
-        const isValid: boolean = true;
-        for(const rule of rules) {
-            console.log(rule);
+    async validate(rules: IValidationRule[]): Promise<Result<IValidationResult>> {
+        let errorMessage = "";
+        let isValid: boolean = true;
+        for (const rule of rules) {
+            const value = this.control.value.trim();
+            switch (rule.type) {
+            case "required":
+                if (!value) {
+                    errorMessage = rule.message;
+                    isValid = false;
+                }
+                break;
+            }
         }
         // Sort rules based on priority before processing
         //const sortedRules = this.rules.sort((a, b) => a.priority - b.priority);

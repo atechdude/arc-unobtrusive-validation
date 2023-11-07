@@ -86,7 +86,7 @@ export interface IFormFactory {
 }
 
 export interface IValidationService {
-    validateControl(control:HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement): void
+    validateControl(control: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement): Promise<void>
 }
 export interface IValidationRuleRegistry {
     addRule(ruleType: string, paramAttributes: string[]): void
@@ -97,13 +97,14 @@ export interface IValidationRule {
     type: string;
     message: string;
     params: ValidationParams;
+    priority: number;
   }
 
 export interface IValidationControl {
     control: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
     validationRules: IValidationRule[];
     isValid: boolean;
-    validate(): void;
+    validate(rules: IValidationRule[]): Promise<Result<IValidationResult>>;
     //addValidationRule(validationRule: IValidationRule): void;
     //removeValidationRule(validationRule: IValidationRule): void;
     //clearValidationRules(): void;

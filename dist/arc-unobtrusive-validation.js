@@ -5481,6 +5481,14 @@ var __metadata = (undefined && undefined.__metadata) || function (k, v) {
 
 
 let FormParser = class FormParser {
+    rulePriorities = new Map([
+        ["required", 1],
+        ["regex", 2],
+        ["length", 3],
+        ["range", 4],
+        ["remote-url", 5]
+        // ... other rules with their respective priorities
+    ]);
     ruleParamAttributes = {
         length: ["min", "max"],
         range: ["min", "max"],
@@ -5493,18 +5501,75 @@ let FormParser = class FormParser {
         const validationRules = {};
         const inputs = Array.from(formElement.elements);
         inputs.forEach(input => {
-            if (input instanceof HTMLInputElement && input.name) {
+            if ((input instanceof HTMLInputElement || input instanceof HTMLSelectElement || input instanceof HTMLTextAreaElement) && input.name) {
                 const rules = this.getValidationRules(input);
-                if (rules.length) {
-                    validationRules[input.name] = rules;
-                }
+                // Assuming you have a function to assign priorities based on the rule type
+                validationRules[input.name] = rules;
             }
         });
         return validationRules;
     }
+    getValidationRules(input) {
+        const rules = [];
+        const rulesWithParams = {};
+        Array.from(input.attributes).forEach(attr => {
+            if (attr.name.startsWith("data-val")) {
+                const match = /data-val-([^\-]+)-?([^\-]+)?/.exec(attr.name);
+                if (match) {
+                    const [, ruleType, paramName] = match;
+                    if (!rulesWithParams[ruleType]) {
+                        rulesWithParams[ruleType] = {
+                            type: ruleType,
+                            message: '',
+                            params: {},
+                            priority: this.rulePriorities.get(ruleType) || 99
+                        };
+                    }
+                    // If it's a parameter of the rule, add it to the params object
+                    if (paramName) {
+                        rulesWithParams[ruleType].params[paramName] = attr.value;
+                    }
+                    else {
+                        // It's the main rule attribute, set the message
+                        rulesWithParams[ruleType].message = attr.value;
+                    }
+                }
+            }
+        });
+        // Convert the aggregated rule objects back into an array
+        Object.values(rulesWithParams).forEach(rule => {
+            rules.push(rule);
+        });
+        // Sort the rules based on their assigned priority
+        return rules.sort((a, b) => a.priority - b.priority);
+    }
+    getValidationRules1(input) {
+        const rules = [];
+        Array.from(input.attributes).forEach(attr => {
+            if (attr.name.startsWith("data-val") && attr.name !== "data-val") {
+                // Extract the rule type, e.g., 'length', 'regex', 'required'
+                const ruleType = attr.name.match(/data-val-([a-z]+)(?:-[a-z]+)?/i)?.[1] || "";
+                // Check if it's a parameter for an existing rule or a standalone rule
+                if (ruleType && !attr.name.endsWith(ruleType)) {
+                    // If it's a parameter, find the rule and add the parameter to it
+                    const rule = rules.find(r => r.type === ruleType);
+                    if (rule) {
+                        const paramName = attr.name.split(ruleType + "-")[1];
+                        rule.params[paramName] = attr.value;
+                    }
+                }
+                else {
+                    // It's a standalone rule, create it and set its priority
+                    const priority = this.rulePriorities.get(ruleType) || 99;
+                    rules.push({ type: ruleType, message: attr.value, params: {}, priority });
+                }
+            }
+        });
+        // Sort the rules based on their assigned priority
+        return rules.sort((a, b) => a.priority - b.priority);
+    }
     getValidationInformation(input) {
         const rules = this.getValidationRules(input);
-        console.log(rules);
         const validationInformation = {
             rules: rules,
             input: input,
@@ -5512,24 +5577,15 @@ let FormParser = class FormParser {
         };
         return new _Result__WEBPACK_IMPORTED_MODULE_0__.Result(validationInformation);
     }
-    getValidationRules(input) {
-        const rules = [];
-        Array.from(input.attributes).forEach(attr => {
-            if (attr.name.startsWith("data-val")) {
-                const ruleType = attr.name.replace("data-val-", "");
-                const message = input.getAttribute(`data-val-${ruleType}`) || "";
-                const params = this.extractParams(input, ruleType);
-                rules.push({ type: ruleType, message, params });
-            }
-        });
-        return rules;
-    }
     extractParams(input, ruleType) {
         const params = {};
+        // Use the already existing `ruleParamAttributes` map to determine which attributes are parameters
         const paramAttributes = this.ruleParamAttributes[ruleType];
         if (paramAttributes) {
             paramAttributes.forEach(param => {
-                const value = input.getAttribute(`data-val-${ruleType}-${param}`);
+                // The attribute name is constructed from the rule type and the parameter name
+                const attributeName = `data-val-${ruleType}-${param}`;
+                const value = input.getAttribute(attributeName);
                 if (value !== null) {
                     params[param] = value;
                 }
@@ -5982,6 +6038,8 @@ __webpack_require__.r(__webpack_exports__);
 class ValidationControl {
     control;
     isInteracted = false;
+    validationRules = [];
+    isValid = false;
     //rules: ValidationRule[];
     constructor(control) {
         this.control = control;
@@ -6139,10 +6197,18 @@ class ValidationControl {
         return rules.sort((a, b) => a.priority - b.priority);
     } */
     async validate(rules) {
-        const errorMessage = "";
-        const isValid = true;
+        let errorMessage = "";
+        let isValid = true;
         for (const rule of rules) {
-            console.log(rule);
+            const value = this.control.value.trim();
+            switch (rule.type) {
+                case "required":
+                    if (!value) {
+                        errorMessage = rule.message;
+                        isValid = false;
+                    }
+                    break;
+            }
         }
         // Sort rules based on priority before processing
         //const sortedRules = this.rules.sort((a, b) => a.priority - b.priority);
@@ -6368,33 +6434,6 @@ class ValidationControl {
 
 /***/ }),
 
-/***/ "./src/ValidationRuleResgistry.ts":
-/*!****************************************!*\
-  !*** ./src/ValidationRuleResgistry.ts ***!
-  \****************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   ValidationRuleRegistry: () => (/* binding */ ValidationRuleRegistry)
-/* harmony export */ });
-class ValidationRuleRegistry {
-    ruleParamAttributes = {};
-    addRule(ruleType, paramAttributes) {
-        this.ruleParamAttributes[ruleType] = paramAttributes;
-    }
-    removeRule(ruleType) {
-        delete this.ruleParamAttributes[ruleType];
-    }
-    getParamsForRule(ruleType) {
-        return this.ruleParamAttributes[ruleType];
-    }
-}
-
-
-/***/ }),
-
 /***/ "./src/di/container-config.ts":
 /*!************************************!*\
   !*** ./src/di/container-config.ts ***!
@@ -6406,7 +6445,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   container: () => (/* binding */ container)
 /* harmony export */ });
-/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/container/container.js");
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/container/container.js");
 /* harmony import */ var _container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./container-types */ "./src/di/container-types.ts");
 /* harmony import */ var _logger_debuggingLogger__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../logger/debuggingLogger */ "./src/logger/debuggingLogger.ts");
 /* harmony import */ var _services_loggerService__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../services/loggerService */ "./src/services/loggerService.ts");
@@ -6421,8 +6460,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _DebounceManager__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../DebounceManager */ "./src/DebounceManager.ts");
 /* harmony import */ var _services_ValidationService__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../services/ValidationService */ "./src/services/ValidationService.ts");
 /* harmony import */ var _FormObserver__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ../FormObserver */ "./src/FormObserver.ts");
-/* harmony import */ var _ValidationRuleResgistry__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ../ValidationRuleResgistry */ "./src/ValidationRuleResgistry.ts");
-/* harmony import */ var _FormParser__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ../FormParser */ "./src/FormParser.ts");
+/* harmony import */ var _FormParser__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ../FormParser */ "./src/FormParser.ts");
 
 
 
@@ -6439,8 +6477,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-
-const container = new inversify__WEBPACK_IMPORTED_MODULE_16__.Container();
+const container = new inversify__WEBPACK_IMPORTED_MODULE_15__.Container();
 container
     .bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.Logger)
     .to(_services_loggerService__WEBPACK_IMPORTED_MODULE_2__.LoggerService)
@@ -6469,7 +6506,7 @@ container
     .inSingletonScope();
 container
     .bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormParser)
-    .to(_FormParser__WEBPACK_IMPORTED_MODULE_15__.FormParser)
+    .to(_FormParser__WEBPACK_IMPORTED_MODULE_14__.FormParser)
     .inSingletonScope();
 container
     .bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormObserver)
@@ -6491,10 +6528,10 @@ container
     .bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebouncerFactory)
     .to(_DebouncerFactory__WEBPACK_IMPORTED_MODULE_7__.DebouncerFactory)
     .inSingletonScope();
-container
-    .bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ValidationRulesRegistry)
-    .to(_ValidationRuleResgistry__WEBPACK_IMPORTED_MODULE_14__.ValidationRuleRegistry)
-    .inSingletonScope();
+//container
+//    .bind<IValidationRuleRegistry>(TYPES.ValidationRulesRegistry)
+//    .to(ValidationRuleRegistry)
+//    .inSingletonScope();
 container
     .bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ValidationService)
     .to(_services_ValidationService__WEBPACK_IMPORTED_MODULE_12__.ValidationService)
@@ -6842,10 +6879,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   ValidationService: () => (/* binding */ ValidationService)
 /* harmony export */ });
-/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
-/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/inject.js");
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/inject.js");
 /* harmony import */ var _di_container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../di/container-types */ "./src/di/container-types.ts");
 /* harmony import */ var _ValidationControl__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../ValidationControl */ "./src/ValidationControl.ts");
+/* harmony import */ var _Result__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../Result */ "./src/Result.ts");
 var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -6861,25 +6899,48 @@ var __param = (undefined && undefined.__param) || function (paramIndex, decorato
 
 
 
+
 let ValidationService = class ValidationService {
+    _logger;
     _formParser;
-    constructor(_formParser) {
+    constructor(_logger, _formParser) {
+        this._logger = _logger;
         this._formParser = _formParser;
     }
-    validateControl(control) {
+    async validateControl(control) {
         const validationControl = new _ValidationControl__WEBPACK_IMPORTED_MODULE_1__.ValidationControl(control);
-        const info = this._formParser.getValidationInformation(control);
-        console.log(info);
-        //const validationRules = this._formParser.getValidationRules(control);
-        //console.log(validationRules);
-        //validationControl.validate(validationRules);
-        // return validationControl;
+        const getValidationInformationResults = this._formParser.getValidationInformation(control);
+        if (!getValidationInformationResults.isSuccess) {
+            const error = _Result__WEBPACK_IMPORTED_MODULE_2__.Result.handleError(getValidationInformationResults);
+            this._logger.getLogger().error(error);
+        }
+        const getValidationRulesResult = _Result__WEBPACK_IMPORTED_MODULE_2__.Result.handleSuccess(getValidationInformationResults);
+        if (getValidationRulesResult === undefined) {
+            this._logger.getLogger().error("Validation rules are undefined");
+            return;
+        }
+        // Destructure the getValidationRulesResult
+        const { rules } = getValidationRulesResult;
+        console.log(rules);
+        const validationResults = await validationControl.validate(rules);
+        if (!validationResults.isSuccess) {
+            const error = _Result__WEBPACK_IMPORTED_MODULE_2__.Result.handleError(validationResults);
+            this._logger.getLogger().error(error);
+            return;
+        }
+        const validationResult = _Result__WEBPACK_IMPORTED_MODULE_2__.Result.handleSuccess(validationResults);
+        if (validationResult === undefined) {
+            this._logger.getLogger().error("Validation result is undefined");
+            return;
+        }
+        console.log(validationResult.control.parentNode);
     }
 };
 ValidationService = __decorate([
-    (0,inversify__WEBPACK_IMPORTED_MODULE_2__.injectable)(),
-    __param(0, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormParser)),
-    __metadata("design:paramtypes", [Object])
+    (0,inversify__WEBPACK_IMPORTED_MODULE_3__.injectable)(),
+    __param(0, (0,inversify__WEBPACK_IMPORTED_MODULE_4__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebuggingLogger)),
+    __param(1, (0,inversify__WEBPACK_IMPORTED_MODULE_4__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormParser)),
+    __metadata("design:paramtypes", [Object, Object])
 ], ValidationService);
 
 
