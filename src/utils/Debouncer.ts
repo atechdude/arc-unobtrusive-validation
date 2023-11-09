@@ -28,6 +28,7 @@ export class Debouncer implements IDebouncer {
         func: T,
         waitMilliseconds: number
     ): void {
+        console.log(`Debounce called. Waiting for ${waitMilliseconds}ms`);
         // Clear the existing timeout, if there is one
         if (this.timeoutId !== undefined) {
             clearTimeout(this.timeoutId);
@@ -35,9 +36,13 @@ export class Debouncer implements IDebouncer {
 
         // Start a new timeout
         this.timeoutId = setTimeout(() => {
+            console.log("Executing debounced function.");
             func();
             this.timeoutId = undefined;
         }, waitMilliseconds);
+    }
+    public getTimeoutId(): number | undefined {
+        return this.timeoutId;
     }
     /**
      * Cancels any pending debounced function calls.
@@ -46,6 +51,10 @@ export class Debouncer implements IDebouncer {
      * that function from being called.
      */
     cancel(): void {
-        clearTimeout(this.timeoutId);
+        if (this.timeoutId !== undefined) {
+            console.log("Cancelling debounce.");
+            clearTimeout(this.timeoutId);
+            this.timeoutId = undefined;
+        }
     }
 }

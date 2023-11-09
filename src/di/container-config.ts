@@ -16,6 +16,8 @@ import {
     ILogger,
     IObservableCollection,
     IStateManager,
+    IUIHandler,
+    IValidationControlFactory,
     IValidationService
 } from "@interfaces/index";
 import { Logger } from "../logging/Logger";
@@ -32,6 +34,8 @@ import { ObservableCollection } from "../classes/ObservableCollection";
 import { DebouncerManager } from "../managers/DebounceManager";
 import { DebouncerFactory } from "../factory/DebouncerFactory";
 import { ValidationService } from "../services/ValidationService";
+import { ValidationControlFactory } from "../factory/ValidationControlFactory";
+import { UIHandler } from "../classes/UIHandler";
 
 const container = new Container();
 
@@ -82,6 +86,14 @@ container
 container
     .bind<IValidationService>(TYPES.ValidationService)
     .to(ValidationService)
+    .inSingletonScope();
+container
+    .bind<IValidationControlFactory>(TYPES.ValidationControlFactory)
+    .to(ValidationControlFactory)
+    .inSingletonScope();
+container
+    .bind<IUIHandler>(TYPES.UIHandler)
+    .to(UIHandler)
     .inSingletonScope();
 
 export { container };

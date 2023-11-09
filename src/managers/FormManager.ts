@@ -5,7 +5,8 @@ import {
     IForm,
     IFormFactory,
     IFormManager,
-    IObservableCollection
+    IObservableCollection,
+    IStateManager
 } from "../interfaces";
 import { TYPES } from "../di/container-types";
 import { Result } from "../classes/Result";
@@ -20,19 +21,12 @@ import { Result } from "../classes/Result";
  */
 export class FormManager implements IFormManager {
     private mutationObserver: MutationObserver | null = null;
-    /**
-     * Constructs the FormManager instance responsible for managing form instances.
-     * It utilizes dependency injection to incorporate various services such as
-     * form collection management, form creation, event emission, and logging.
-     * @param {IObservableCollection<IForm>} _formsCollection - An observable collection that maintains the forms.
-     * @param {IFormFactory} _formFactory - A factory service for creating new form instances.
-     * @param {IEventEmitter<any>} _eventEmitter - An event emitter service to handle form-related events.
-     * @param {IDecoratedLogger} _logger - A logging service for error and debug reporting.
-     */
+
     constructor(
         @inject(TYPES.ObservableFormsCollection)
         private readonly _formsCollection: IObservableCollection<IForm>,
         @inject(TYPES.FormFactory) private readonly _formFactory: IFormFactory,
+        @inject(TYPES.StateManager) private readonly _stateManager:IStateManager,
         @inject(TYPES.EventEmitter)
         private readonly _eventEmitter: IEventEmitter<any>,
         @inject(TYPES.DebuggingLogger)
@@ -119,6 +113,13 @@ export class FormManager implements IFormManager {
             if (elements.length === 0) {
                 return;
             }
+
+            // Set the initial value for each form control before adding the form to the collection.
+            elements.forEach((element) => {
+                if (element instanceof HTMLInputElement || element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement) {
+                    this._stateManager.setInitialValue(element.name, element.value);
+                }
+            });
             // If the elements to not have a data-val attribute, return
             if (!elements.some((element) => element.hasAttribute("data-val"))) {
                 return;

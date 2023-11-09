@@ -27,11 +27,17 @@ export class FormParser implements IFormParser {
         ["required", 1],
         ["regex", 2],
         ["length", 3],
-        ["range", 4],
-        ["remote-url", 5]
+        ["maxlength", 4],
+        ["minlength", 6],
+        ["range", 11],
+        ["remote", 8],
+        ["creditcard", 9],
+        ["email", 10],
+        ["phone", 10],
+        ["url", 10]
         // ... other rules with their respective priorities
     ]);
-    constructor(@inject(TYPES.Logger) private readonly _logger: ILogger) {}
+    constructor(@inject(TYPES.Logger) private readonly _logger: ILogger) { }
     /**
      * Parses the given HTML form element and extracts validation rules for each input.
      * @param {HTMLFormElement} formElement - The form element to parse.
@@ -191,9 +197,9 @@ export class FormParser implements IFormParser {
             // Attempt to get the validation rules for the input element.
             const rules: IValidationRule[] = this.getValidationRules(
                 input as
-                    | HTMLInputElement
-                    | HTMLSelectElement
-                    | HTMLTextAreaElement
+                | HTMLInputElement
+                | HTMLSelectElement
+                | HTMLTextAreaElement
             );
             // Construct the validation information object.
             const parentNode = input.parentNode as HTMLElement;

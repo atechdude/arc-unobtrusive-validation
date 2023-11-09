@@ -5014,6 +5014,14 @@ class Form {
         if (this.isAjax) {
             this.setupAjax();
         }
+        Array.from(this.elements).forEach((element) => {
+            if (element instanceof HTMLInputElement || element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement || element instanceof HTMLButtonElement) {
+                if (!element.id && element.name) {
+                    element.id = this.generateIdFromName(element.name);
+                    // If you also need to set up ARIA attributes or other properties, do it here.
+                }
+            }
+        });
     }
     setupAjax() {
         // Get the update target
@@ -5021,6 +5029,12 @@ class Form {
         if (updateTarget === undefined) {
             throw new Error("data-ajax-update attribute is undefined");
         }
+    }
+    generateIdFromName(name) {
+        // This method generates a valid ID based on the element's name attribute.
+        // You have several options for how you want to generate the ID. For example, a GUID, a hash, etc.
+        // For simplicity, we'll just use the name attribute.
+        return `form-control-${name}`;
     }
 }
 
@@ -5132,8 +5146,14 @@ let FormParser = class FormParser {
         ["required", 1],
         ["regex", 2],
         ["length", 3],
-        ["range", 4],
-        ["remote-url", 5]
+        ["maxlength", 4],
+        ["minlength", 6],
+        ["range", 11],
+        ["remote", 8],
+        ["creditcard", 9],
+        ["email", 10],
+        ["phone", 10],
+        ["url", 10]
         // ... other rules with their respective priorities
     ]);
     constructor(_logger) {
@@ -5632,6 +5652,125 @@ class Result {
 
 /***/ }),
 
+/***/ "./src/classes/UIHandler.ts":
+/*!**********************************!*\
+  !*** ./src/classes/UIHandler.ts ***!
+  \**********************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   UIHandler: () => (/* binding */ UIHandler)
+/* harmony export */ });
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/inject.js");
+/* harmony import */ var _di_container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../di/container-types */ "./src/di/container-types.ts");
+var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (undefined && undefined.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (undefined && undefined.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+
+
+let UIHandler = class UIHandler {
+    _logger;
+    constructor(_logger) {
+        this._logger = _logger;
+    }
+    updateValidationMessage(validationResult) {
+        if (validationResult === undefined) {
+            return;
+        }
+        const { control, errorMessages, isValid } = validationResult;
+        if (!isValid) {
+            // Get the first error message
+            const errorMessage = errorMessages.find(m => m.length > 0);
+            if (errorMessage === undefined) {
+                return;
+            }
+            this.showValidationMessage(control, errorMessage);
+        }
+        else {
+            this.hideValidationMessage(control);
+        }
+    }
+    showValidationMessage(control, message) {
+        // Check if the control is contained within a parent element
+        const parentElement = control.parentElement;
+        if (!parentElement) {
+            console.warn("Control is not contained within a parent element");
+            return; // Exit the function if there is no parent element
+        }
+        // Find any element within the parent that has the 'data-valmsg-for' attribute for the control's name
+        const validationMessageElement = this.getValidationMessageElement(control);
+        if (validationMessageElement) {
+            // We found the element for the validation message, regardless of its type (it could be a <span>, <div>, etc.)
+            // Update the validation message text
+            validationMessageElement.textContent = message;
+            // Update the classes to reflect the validation state
+            validationMessageElement.classList.remove("field-validation-valid");
+            validationMessageElement.classList.add("field-validation-error");
+            // Set ARIA attributes
+            control.setAttribute("aria-invalid", "true"); // Mark the control as invalid
+            control.setAttribute("aria-describedby", validationMessageElement.id); // Ensure the message element has an ID for this to work
+        }
+        else {
+            // If we couldn't find the element for the validation message, log a warning message
+            console.warn(`No validation message element found for control with name: ${control.name}`);
+        }
+    }
+    hideValidationMessage(control) {
+        // Check if the control is contained within a parent element
+        const parentElement = control.parentElement;
+        if (!parentElement) {
+            console.warn("Control is not contained within a parent element");
+            return; // Exit the function if there is no parent element
+        }
+        // Find any element within the parent that has the 'data-valmsg-for' attribute for the control's name
+        const validationMessageElement = this.getValidationMessageElement(control);
+        if (validationMessageElement) {
+            // We found the element for the validation message, regardless of its type (it could be a <span>, <div>, etc.)
+            // Clear the validation message text
+            validationMessageElement.textContent = "";
+            // Update the classes to reflect the validation state
+            validationMessageElement.classList.remove("field-validation-error");
+            validationMessageElement.classList.add("field-validation-valid");
+            // Update ARIA attributes
+            control.removeAttribute("aria-invalid"); // Remove the invalid attribute
+            control.removeAttribute("aria-describedby"); // Remove the describedby attribute
+        }
+        else {
+            // If we couldn't find the element for the validation message, log a warning message
+            console.warn(`No validation message element found for control with name: ${control.name}`);
+        }
+    }
+    getValidationMessageElement(control) {
+        let msgElement = null;
+        //msgElement = control.parentNode//querySelector(`[data-valmsg-for="${control.name}"]`);
+        if (control.parentElement) {
+            msgElement = control.parentElement.querySelector(`[data-valmsg-for="${control.name}"]`);
+        }
+        return msgElement;
+    }
+};
+UIHandler = __decorate([
+    (0,inversify__WEBPACK_IMPORTED_MODULE_1__.injectable)(),
+    __param(0, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebuggingLogger)),
+    __metadata("design:paramtypes", [Object])
+], UIHandler);
+
+
+
+/***/ }),
+
 /***/ "./src/classes/ValidationControl.ts":
 /*!******************************************!*\
   !*** ./src/classes/ValidationControl.ts ***!
@@ -5646,243 +5785,207 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _Result__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Result */ "./src/classes/Result.ts");
 
 class ValidationControl {
+    _logger;
     control;
     isInteracted = false;
     validationRules = [];
     isValid = false;
-    //rules: ValidationRule[];
-    constructor(control) {
+    isInteractedWith = false;
+    constructor(control, _logger) {
+        this._logger = _logger;
         this.control = control;
-        //this.rules = this.extractRules(control);
     }
     async validate(rules) {
-        let errorMessage = "";
-        let isValid = true;
-        const value = this.control.value.trim();
-        for (const rule of rules) {
-            console.log(rule);
-            switch (rule.type) {
-                case "required": {
-                    if (!value) {
-                        errorMessage = rule.message;
-                        isValid = false;
-                    }
-                    break;
+        try {
+            const value = this.control.value.trim();
+            const validationResult = {
+                control: this.control,
+                isValid: true,
+                errorMessage: "",
+                errorMessages: []
+            };
+            for (const rule of rules) {
+                if (this.isInteracted) {
+                    continue;
                 }
-                case "length": {
-                    const { min, max } = rule.params;
-                    const valueLength = value.length;
-                    // If min or max are not defined, they won't be checked
-                    const minLength = min ? parseInt(min, 10) : null;
-                    const maxLength = max ? parseInt(max, 10) : null;
-                    // Check against minimum length if specified
-                    if (minLength !== null && valueLength < minLength) {
-                        errorMessage = rule.message;
-                        isValid = false;
-                    }
-                    // Check against maximum length if specified
-                    else if (maxLength !== null && valueLength > maxLength) {
-                        errorMessage = rule.message;
-                        isValid = false;
-                    }
-                    break;
-                }
-                case "regex": {
-                    // Ensure the pattern is provided, if not, skip this rule
-                    if (!rule.params.pattern) {
-                        break;
-                    }
-                    // Create a regular expression from the pattern string
-                    const pattern = new RegExp(rule.params.pattern);
-                    // Test the current value against the regex pattern
-                    if (!pattern.test(value)) {
-                        errorMessage = rule.message;
-                        isValid = false;
-                    }
+                const ruleResult = await this.applyRule(rule, value);
+                if (!ruleResult.isValid) {
+                    validationResult.isValid = false;
+                    validationResult.errorMessages.push(ruleResult.errorMessage);
+                    // Optionally, break here if you want to stop at the first failure
                     break;
                 }
             }
-            // If already invalid, no need to check further
-            if (!isValid) {
-                break;
+            // If there were validation errors, mark the field as interacted.
+            if (validationResult.errorMessages.length > 0) {
+                this.isInteracted = true;
             }
+            return new _Result__WEBPACK_IMPORTED_MODULE_0__.Result(validationResult);
         }
-        // Here we're returning a Result object with the validation result
-        const validationResult = {
-            isValid: isValid,
-            errorMessage: errorMessage,
-            control: this.control
-        };
-        return new _Result__WEBPACK_IMPORTED_MODULE_0__.Result(isValid ? validationResult : new Error(errorMessage));
+        catch (error) {
+            return new _Result__WEBPACK_IMPORTED_MODULE_0__.Result(error instanceof Error ? error : new Error(String(error)));
+        }
     }
-    /* private extractRules(
-        control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    ): ValidationRule[] {
-        const rules: ValidationRule[] = [];
-        const attributesArray = Array.from(control.attributes);
-
-        // Loop over all attributes
-        for (const attr of attributesArray) {
-            // Check if attribute starts with 'data-val-'
-            if (attr.name.startsWith("data-val-")) {
-                // For required rule
-                if (attr.name === "data-val-required") {
-                    rules.push({
-                        type: "required",
-                        message: attr.value,
-                        priority: 0
-                    });
-                }
-
-                // For length rule
-                else if (attr.name === "data-val-length") {
-                    rules.push({
-                        type: "length",
-                        message: attr.value,
-                        maxLength: control.getAttribute("data-val-length-max")
-                            ? parseInt(
-                                  control.getAttribute("data-val-length-max")!
-                            )
-                            : undefined,
-                        minLength: control.getAttribute("data-val-length-min")
-                            ? parseInt(
-                                  control.getAttribute("data-val-length-min")!
-                            )
-                            : undefined,
-                        priority: 1
-                    });
-                }
-
-                // For range rule
-                else if (attr.name === "data-val-range") {
-                    rules.push({
-                        type: "range",
-                        message: attr.value,
-                        maxRange: control.getAttribute("data-val-range-max")
-                            ? parseInt(
-                                  control.getAttribute("data-val-range-max")!
-                            )
-                            : undefined,
-                        minRange: control.getAttribute("data-val-range-min")
-                            ? parseInt(
-                                  control.getAttribute("data-val-range-min")!
-                            )
-                            : undefined,
-                        priority: 2
-                    });
-                }
-
-                // For regex rule
-                else if (attr.name === "data-val-regex") {
-                    rules.push({
-                        type: "regex",
-                        message: attr.value,
-                        pattern:
-                            control.getAttribute("data-val-regex-pattern") ??
-                            undefined,
-                        priority: 3
-                    });
-                } else if (attr.name === "data-val-equalto") {
-                    const compareToControlName = control.getAttribute(
-                        "data-val-equalto-other"
-                    );
-                    if (compareToControlName) {
-                        const nameToSearch = compareToControlName.replace(
-                            "*.",
-                            ""
-                        ); // Removes "*." if present
-                        rules.push({
-                            type: "compare",
-                            message: attr.value,
-                            compareTo: nameToSearch,
-                            priority: 4
-                        });
+    async applyRule(rule, value) {
+        switch (rule.type) {
+            case "required":
+                return this.validateRequired(value, rule.message);
+            case "length": {
+                const minLength = rule.params.min ? parseInt(rule.params.min, 10) : 0; // Default to 0 if not specified
+                const maxLength = rule.params.max ? parseInt(rule.params.max, 10) : Infinity; // Default to Infinity if not specified
+                return this.validateLength(value, minLength, maxLength, rule.message);
+            }
+            case "maxlength": {
+                const maxLength = rule.params.max ? parseInt(rule.params.max, 10) : Infinity; // Default to Infinity if not specified
+                return this.validateLength(value, 0, maxLength, rule.message);
+            }
+            // minlength
+            case "minlength": {
+                const minLength = rule.params.min ? parseInt(rule.params.min, 10) : 0; // Default to 0 if not specified
+                return this.validateLength(value, minLength, Infinity, rule.message);
+            }
+            case "equalto": {
+                const compareToControlName = rule.params.other.replace(/^\*\./, ""); // Stripping out any leading '*.'
+                return this.validateEqualTo(value, compareToControlName, rule.message);
+            }
+            case "regex":
+                return rule.params.pattern
+                    ? this.validateRegex(value, rule.params.pattern, rule.message)
+                    : this.createValidationResult(true, "");
+            case "range": {
+                const min = rule.params.min !== undefined ? parseInt(rule.params.min, 10) : -Infinity;
+                const max = rule.params.max !== undefined ? parseInt(rule.params.max, 10) : Infinity;
+                return this.validateRange(value, min, max, rule.message);
+            }
+            case "email": {
+                const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return this.validateRegex(value, emailPattern.source, rule.message || "Invalid email address.");
+            }
+            case "phone": {
+                const phonePattern = /^(?:\+1)?\s*(?:\([2-9]\d{2}\)\s*|\d{3}[\s.-]?)\d{3}[\s.-]?\d{4}$/;
+                return this.validateRegex(value, phonePattern.source, rule.message || "Invalid phone number format.");
+            }
+            case "url": {
+                const urlPattern = /^(http(s)?:\/\/.)[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)$/;
+                return this.validateRegex(value, urlPattern.source, rule.message || "Invalid URL format.");
+            }
+            case "creditcard":
+                return this.validateCreditCard(value, rule.message || "The credit card number is not valid.");
+            case "remote": {
+                const { url, additionalfields } = rule.params;
+                return await this.validateRemote(value, url, additionalfields, rule.message);
+            }
+            default:
+                break;
+        }
+        this.isValid = true;
+        return this.createValidationResult(true, "");
+    }
+    validateRequired(value, message) {
+        if (!value) {
+            return this.createValidationResult(false, message);
+        }
+        return this.createValidationResult(true, "");
+    }
+    validateEqualTo(value, compareToControlName, errorMessage) {
+        const compareControl = document.querySelector(`[name='${compareToControlName}']`);
+        const isValid = compareControl && value === compareControl.value.trim();
+        return this.createValidationResult(isValid, isValid ? "" : errorMessage || "The values do not match.");
+    }
+    validateLength(value, minLength, maxLength, message) {
+        if (value.length < minLength || value.length > maxLength) {
+            return this.createValidationResult(false, message);
+        }
+        return this.createValidationResult(true, "");
+    }
+    validateRegex(value, pattern, message) {
+        const regex = new RegExp(pattern);
+        if (!regex.test(value)) {
+            return this.createValidationResult(false, message);
+        }
+        return this.createValidationResult(true, "");
+    }
+    validateRange(value, min, max, message) {
+        const numericValue = parseFloat(value);
+        const isValid = numericValue >= min && numericValue <= max;
+        return this.createValidationResult(isValid, isValid ? "" : message);
+    }
+    validateCreditCard(value, message) {
+        const isValid = this.isValidCreditCard(value);
+        return this.createValidationResult(isValid, isValid ? "" : message);
+    }
+    async validateRemote(value, url, fields, errorMessage) {
+        let validationUrl = `${url}?${encodeURIComponent(this.control.name)}=${encodeURIComponent(value)}`;
+        // Append additional fields to the URL if they exist
+        if (fields) {
+            const fieldsArray = fields.split(",").map(field => field.trim().replace(/^\*\./, ""));
+            for (const fieldName of fieldsArray) {
+                if (fieldName !== this.control.name) {
+                    // Now 'fieldName' won't have the '*.' prefix.
+                    const additionalFieldElement = this.control.form?.querySelector(`[name="${fieldName}"]`);
+                    if (additionalFieldElement) {
+                        validationUrl += `&${encodeURIComponent(fieldName)}=${encodeURIComponent(additionalFieldElement.value)}`;
                     }
-                } else if (attr.name === "data-val-minlength") {
-                    rules.push({
-                        type: "minlength",
-                        message: attr.value,
-                        minLength: control.getAttribute(
-                            "data-val-minlength-min"
-                        )
-                            ? parseInt(
-                                  control.getAttribute(
-                                      "data-val-minlength-min"
-                                  )!
-                            )
-                            : undefined,
-                        priority: 5 // Assign appropriate priority
-                    });
-                } else if (attr.name === "data-val-phone") {
-                    rules.push({
-                        type: "phone",
-                        message: attr.value,
-                        priority: 6
-                    });
-                } else if (attr.name === "data-val-url") {
-                    rules.push({
-                        type: "url",
-                        message: attr.value,
-                        priority: 7
-                    });
-                } else if (attr.name === "data-val-creditcard") {
-                    rules.push({
-                        type: "creditcard",
-                        message: attr.value,
-                        priority: 8
-                    });
-                } else if (attr.name === "data-val-fileextensions") {
-                    rules.push({
-                        type: "fileextensions",
-                        message: attr.value,
-                        extensions:
-                            control.getAttribute(
-                                "data-val-fileextensions-extensions"
-                            ) ?? undefined,
-                        priority: 9
-                    });
-                } else if (attr.name === "data-val-remote") {
-                    rules.push({
-                        type: "remote",
-                        message: attr.value,
-                        remote:
-                            control.getAttribute("data-val-remote-url") ??
-                            undefined,
-                        additionalFields:
-                            control.getAttribute(
-                                "data-val-remote-additionalfields"
-                            ) ?? undefined,
-                        priority: 11
-                    });
-                } else if (attr.name === "data-val-email") {
-                    rules.push({
-                        type: "email",
-                        message: attr.value,
-                        priority: 10
-                    });
+                    else {
+                        // Log for debugging purposes
+                        console.log(`Field with name ${fieldName} not found.`);
+                    }
                 }
             }
         }
-        // Sort on Priority
-        return rules.sort((a, b) => a.priority - b.priority);
-    } */
+        try {
+            const response = await fetch(validationUrl);
+            if (!response.ok) {
+                throw new Error(`Server responded with status: ${response.status}`);
+            }
+            const validationResult = await response.json();
+            // The JSON response should contains at least a boolean `isValid` and may contain an optional string `errorMessage`
+            if (typeof validationResult.isValid !== "boolean") {
+                // The JSON does not have the expected shape.
+                throw new Error("Invalid response format from server.");
+            }
+            return this.createValidationResult(validationResult.isValid, errorMessage);
+        }
+        catch (error) {
+            this._logger.getLogger().error(error);
+            let errorMessage = "Remote validation failed due to an unknown error. Please try again.";
+            if (error instanceof TypeError) {
+                // This usually indicates a network error.
+                errorMessage = "Network error: Unable to reach the validation server. Please check your connection.";
+            }
+            else if (error instanceof Error) {
+                // Generic error, possibly from the fetch operation itself (e.g., server responded with a status code).
+                errorMessage = error.message;
+            }
+            return this.createValidationResult(false, errorMessage);
+        }
+    }
+    createValidationResult(isValid, errorMessage) {
+        return {
+            control: this.control,
+            isValid: isValid,
+            errorMessage: errorMessage || "",
+            errorMessages: errorMessage ? [errorMessage] : [] // Only include errorMessage in the array if it's truthy
+        };
+    }
     isValidCreditCard(value) {
+        // First, check if the input has only digits (after removing spaces)
+        if (!/^\d+$/.test(value.replace(/\s+/g, ""))) {
+            return false; // Contains non-numeric characters
+        }
         // Remove all non-digit characters from the string
         const numericOnly = value.replace(/\D/g, "");
-        // Luhn's algorithm begins with the rightmost digit and moves left
+        // Implement Luhn Algorithm
         let sum = 0;
         let shouldDouble = false;
         // Loop through values starting from the rightmost side
         for (let i = numericOnly.length - 1; i >= 0; i--) {
             let digit = parseInt(numericOnly.charAt(i), 10);
             if (shouldDouble) {
-                // If double of digit is more than 9, add the digits
-                // Otherwise, just double the value
                 if ((digit *= 2) > 9)
                     digit -= 9;
             }
             sum += digit;
-            // Alternate the value of shouldDouble
             shouldDouble = !shouldDouble;
         }
         // If the sum modulo 10 is equal to 0, the number is valid
@@ -5904,7 +6007,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   container: () => (/* binding */ container)
 /* harmony export */ });
-/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/container/container.js");
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/container/container.js");
 /* harmony import */ var _container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./container-types */ "./src/di/container-types.ts");
 /* harmony import */ var _logging_Logger__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../logging/Logger */ "./src/logging/Logger.ts");
 /* harmony import */ var _classes_EventEmitter__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../classes/EventEmitter */ "./src/classes/EventEmitter.ts");
@@ -5920,6 +6023,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _managers_DebounceManager__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../managers/DebounceManager */ "./src/managers/DebounceManager.ts");
 /* harmony import */ var _factory_DebouncerFactory__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ../factory/DebouncerFactory */ "./src/factory/DebouncerFactory.ts");
 /* harmony import */ var _services_ValidationService__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ../services/ValidationService */ "./src/services/ValidationService.ts");
+/* harmony import */ var _factory_ValidationControlFactory__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ../factory/ValidationControlFactory */ "./src/factory/ValidationControlFactory.ts");
+/* harmony import */ var _classes_UIHandler__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ../classes/UIHandler */ "./src/classes/UIHandler.ts");
 
 
 
@@ -5936,7 +6041,9 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-const container = new inversify__WEBPACK_IMPORTED_MODULE_15__.Container();
+
+
+const container = new inversify__WEBPACK_IMPORTED_MODULE_17__.Container();
 container.bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.Logger).to(_logging_Logger__WEBPACK_IMPORTED_MODULE_1__.Logger).inSingletonScope();
 container
     .bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventEmitter)
@@ -5985,6 +6092,14 @@ container
     .bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ValidationService)
     .to(_services_ValidationService__WEBPACK_IMPORTED_MODULE_14__.ValidationService)
     .inSingletonScope();
+container
+    .bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ValidationControlFactory)
+    .to(_factory_ValidationControlFactory__WEBPACK_IMPORTED_MODULE_15__.ValidationControlFactory)
+    .inSingletonScope();
+container
+    .bind(_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.UIHandler)
+    .to(_classes_UIHandler__WEBPACK_IMPORTED_MODULE_16__.UIHandler)
+    .inSingletonScope();
 
 
 
@@ -6016,8 +6131,9 @@ const TYPES = {
     FormFactory: Symbol.for("IFormFactory"),
     FormParser: Symbol.for("IFormParser"),
     ObservableFormsCollection: Symbol.for("IObservableCollection"),
-    ValidationRulesRegistry: Symbol.for("IValidationRulesRegistry"),
-    ValidationService: Symbol.for("IValidationService")
+    ValidationService: Symbol.for("IValidationService"),
+    ValidationControlFactory: Symbol.for("IValidationControlFactory"),
+    UIHandler: Symbol.for("IUIHandler")
 };
 
 
@@ -6127,6 +6243,55 @@ FormFactory = __decorate([
     (0,inversify__WEBPACK_IMPORTED_MODULE_2__.injectable)(),
     __metadata("design:paramtypes", [])
 ], FormFactory);
+
+
+
+/***/ }),
+
+/***/ "./src/factory/ValidationControlFactory.ts":
+/*!*************************************************!*\
+  !*** ./src/factory/ValidationControlFactory.ts ***!
+  \*************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   ValidationControlFactory: () => (/* binding */ ValidationControlFactory)
+/* harmony export */ });
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/inject.js");
+/* harmony import */ var _di_container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../di/container-types */ "./src/di/container-types.ts");
+/* harmony import */ var _classes_ValidationControl__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../classes/ValidationControl */ "./src/classes/ValidationControl.ts");
+var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (undefined && undefined.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (undefined && undefined.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+
+
+
+let ValidationControlFactory = class ValidationControlFactory {
+    _logger;
+    constructor(logger) {
+        this._logger = logger;
+    }
+    create(control) {
+        return new _classes_ValidationControl__WEBPACK_IMPORTED_MODULE_1__.ValidationControl(control, this._logger);
+    }
+};
+ValidationControlFactory = __decorate([
+    (0,inversify__WEBPACK_IMPORTED_MODULE_2__.injectable)(),
+    __param(0, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebuggingLogger)),
+    __metadata("design:paramtypes", [Object])
+], ValidationControlFactory);
 
 
 
@@ -6388,21 +6553,14 @@ var __param = (undefined && undefined.__param) || function (paramIndex, decorato
 let FormManager = class FormManager {
     _formsCollection;
     _formFactory;
+    _stateManager;
     _eventEmitter;
     _logger;
     mutationObserver = null;
-    /**
-     * Constructs the FormManager instance responsible for managing form instances.
-     * It utilizes dependency injection to incorporate various services such as
-     * form collection management, form creation, event emission, and logging.
-     * @param {IObservableCollection<IForm>} _formsCollection - An observable collection that maintains the forms.
-     * @param {IFormFactory} _formFactory - A factory service for creating new form instances.
-     * @param {IEventEmitter<any>} _eventEmitter - An event emitter service to handle form-related events.
-     * @param {IDecoratedLogger} _logger - A logging service for error and debug reporting.
-     */
-    constructor(_formsCollection, _formFactory, _eventEmitter, _logger) {
+    constructor(_formsCollection, _formFactory, _stateManager, _eventEmitter, _logger) {
         this._formsCollection = _formsCollection;
         this._formFactory = _formFactory;
+        this._stateManager = _stateManager;
         this._eventEmitter = _eventEmitter;
         this._logger = _logger;
     }
@@ -6477,6 +6635,12 @@ let FormManager = class FormManager {
             if (elements.length === 0) {
                 return;
             }
+            // Set the initial value for each form control before adding the form to the collection.
+            elements.forEach((element) => {
+                if (element instanceof HTMLInputElement || element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement) {
+                    this._stateManager.setInitialValue(element.name, element.value);
+                }
+            });
             // If the elements to not have a data-val attribute, return
             if (!elements.some((element) => element.hasAttribute("data-val"))) {
                 return;
@@ -6541,9 +6705,10 @@ FormManager = __decorate([
     ,
     __param(0, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ObservableFormsCollection)),
     __param(1, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormFactory)),
-    __param(2, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventEmitter)),
-    __param(3, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebuggingLogger)),
-    __metadata("design:paramtypes", [Object, Object, Object, Object])
+    __param(2, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.StateManager)),
+    __param(3, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.EventEmitter)),
+    __param(4, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebuggingLogger)),
+    __metadata("design:paramtypes", [Object, Object, Object, Object, Object])
 ], FormManager);
 
 
@@ -6581,26 +6746,48 @@ var __param = (undefined && undefined.__param) || function (paramIndex, decorato
 let StateManager = class StateManager {
     _logger;
     dirtyMap = {};
+    validatedMap = {};
+    initialValues = {};
+    /**
+     * Constructs a new instance of the StateManager.
+     * @param {IDecoratedLogger} _logger - The logger service for logging information.
+     */
     constructor(_logger) {
         this._logger = _logger;
-        console.log("StateManager constructor");
     }
+    /**
+     * Marks a control as dirty (modified).
+     * @param {string} controlName - The name of the control to mark as dirty.
+     */
     makeControlDirty(controlName) {
         this.dirtyMap[controlName] = true;
         this._logger.getLogger().info(`Control ${controlName} is now dirty`);
     }
+    /**
+     * Checks if a control is marked as dirty (modified).
+     * @param {string} controlName - The name of the control to check.
+     * @returns {boolean} - True if the control is dirty, otherwise false.
+     */
     isControlDirty(controlName) {
         this._logger
             .getLogger()
             .info(`Checking if control ${controlName} is dirty`);
         return !!this.dirtyMap[controlName];
     }
+    /**
+     * Clears the dirty state of a control, marking it as clean (unmodified).
+     * @param {string} controlName - The name of the control to clear the dirty state for.
+     */
     clearControlDirtyState(controlName) {
         this._logger
             .getLogger()
             .info(`Clearing dirty state for control ${controlName}`);
         delete this.dirtyMap[controlName];
     }
+    /**
+     * Clears the dirty state for multiple controls at once.
+     * @param {string[]} controlNames - An array of control names to clear the dirty state for.
+     */
     clearControlsDirtyState(controlNames) {
         controlNames.forEach((controlName) => {
             if (Object.prototype.hasOwnProperty.call(this.dirtyMap, controlName)) {
@@ -6611,9 +6798,39 @@ let StateManager = class StateManager {
             }
         });
     }
+    setControlValidated(controlName) {
+        this.validatedMap[controlName] = true;
+        this._logger.getLogger().info(`Control ${controlName} has been validated`);
+    }
+    isControlValidated(controlName) {
+        return !!this.validatedMap[controlName];
+    }
+    clearControlValidatedState(controlName) {
+        delete this.validatedMap[controlName];
+        this._logger.getLogger().info(`Cleared validated state for control ${controlName}`);
+    }
+    clearControlsValidatedState(controlNames) {
+        controlNames.forEach((controlName) => {
+            if (this.validatedMap[controlName]) {
+                this.clearControlValidatedState(controlName);
+            }
+        });
+    }
+    // Call this method to set the initial value of a control
+    setInitialValue(controlName, value) {
+        this.initialValues[controlName] = value;
+    }
+    // Call this to check if the value has changed from the initial value
+    hasValueChanged(controlName, currentValue) {
+        return this.initialValues[controlName] !== currentValue;
+    }
 };
 StateManager = __decorate([
-    (0,inversify__WEBPACK_IMPORTED_MODULE_1__.injectable)(),
+    (0,inversify__WEBPACK_IMPORTED_MODULE_1__.injectable)()
+    /**
+     * Manages the state of controls within a form, tracking whether they have been modified.
+     */
+    ,
     __param(0, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebuggingLogger)),
     __metadata("design:paramtypes", [Object])
 ], StateManager);
@@ -6660,6 +6877,16 @@ let EventService = class EventService {
     eventListenersMap = new WeakMap();
     dirtyMap = {};
     debouncers = {};
+    validationInProgress = new Set();
+    /**
+     * Initializes a new instance of the EventService.
+     * @param {IObservableCollection<IForm>} _observableFormsCollection - Collection of observable forms.
+     * @param {IDebouncerFactory} _debounceFactory - Factory for creating debouncers.
+     * @param {IValidationService} _validationService - Service for performing validation.
+     * @param {IStateManager} _stateManager - State manager to track control dirty state.
+     * @param {IDebouncerManager} _debouncerManager - Manager for debouncing validation calls.
+     * @param {IDecoratedLogger} _logger - Logger for diagnostic messages.
+     */
     constructor(_observableFormsCollection, _debounceFactory, _validationService, _stateManager, _debouncerManager, _logger) {
         this._observableFormsCollection = _observableFormsCollection;
         this._debounceFactory = _debounceFactory;
@@ -6667,10 +6894,12 @@ let EventService = class EventService {
         this._stateManager = _stateManager;
         this._debouncerManager = _debouncerManager;
         this._logger = _logger;
-        console.log("EventService constructor");
         this._observableFormsCollection.addObserver(this);
     }
-    // Add Listeners When We Get a Notification of a New Form
+    /**
+     * Reacts to notifications about form collection changes, setting up or cleaning up event listeners as necessary.
+     * @param {IChange<IForm>} change - The change notification object containing the type of change and the form affected.
+     */
     async notify(change) {
         console.log("EventService notify");
         const { type: changeType, item: form } = change;
@@ -6690,6 +6919,10 @@ let EventService = class EventService {
             await this.addListeners(form, listeners);
         }
     }
+    /**
+     * Sets up event handlers for all controls in the specified form.
+     * @param {IForm} form - The form for which to set up event handlers.
+     */
     setupHandlers(form) {
         // Loop over each control in the form
         const controls = Array.from(form.elements);
@@ -6715,48 +6948,66 @@ let EventService = class EventService {
     createInputHandler(debounceTime) {
         return (event) => {
             const control = event.target;
-            this._stateManager.makeControlDirty(control.name);
-            this.debouncedValidate(control, debounceTime);
+            // Check if the value has changed from the initial value to mark as dirty.
+            if (this._stateManager.hasValueChanged(control.name, control.value)) {
+                this._stateManager.makeControlDirty(control.name);
+                // Reset the validated state since the value has changed.
+                this._stateManager.clearControlValidatedState(control.name);
+                // Update the initial value to the new value
+                this._stateManager.setInitialValue(control.name, control.value);
+                this.debouncedValidate(control, debounceTime);
+            }
         };
     }
     createBlurHandler() {
-        return (event) => {
-            // Immediately Invoked Function Expression (IIFE)
-            (async (event) => {
-                const focusEvent = event;
-                const target = focusEvent.target;
-                const relatedTarget = focusEvent.relatedTarget;
-                if (relatedTarget &&
-                    (relatedTarget.tagName === "INPUT" ||
-                        relatedTarget.tagName === "SELECT" ||
-                        relatedTarget.tagName === "TEXTAREA" ||
-                        relatedTarget.isContentEditable)) {
-                    this._stateManager.makeControlDirty(target.name);
-                    try {
-                        await this._validationService.validateControl(target);
-                    }
-                    catch (error) {
-                        this._logger
-                            .getLogger()
-                            .error(error instanceof Error
-                            ? error
-                            : new Error("Error in blurEventHandler: " + error));
-                    }
+        return async (event) => {
+            console.log("Executing blur handler");
+            const focusEvent = event;
+            const target = focusEvent.target;
+            const relatedTarget = focusEvent.relatedTarget;
+            // Check if the related target is within the same form as the target.
+            if (!relatedTarget || !target.form?.contains(relatedTarget)) {
+                console.log("Focus moved outside the form or to a non-focusable element. Canceling blur validation.");
+                return;
+            }
+            // Only proceed with blur validation if the control is dirty (value changed)
+            // and has not been previously validated since the last change.
+            if (this._stateManager.isControlDirty(target.name) && !this._stateManager.isControlValidated(target.name)) {
+                try {
+                    await this._validationService.validateControl(target);
+                    // After validation, clear the dirty state and mark the control as validated.
+                    this._stateManager.clearControlDirtyState(target.name);
+                    this._stateManager.setControlValidated(target.name);
                 }
-            })(event).catch((e) => {
-                // Handle any errors that occurred during initialization
-                this._logger.getLogger().error("Error in IIFE: " + e);
-            });
+                catch (error) {
+                    this._logger.getLogger().error(error instanceof Error ? error : new Error("Error in blurEventHandler: " + error));
+                }
+            }
+            else {
+                console.log(`Skipping validation for ${target.name} as it hasn't changed or has been previously validated.`);
+            }
         };
     }
-    // Non-debounced focus event handler ("Useful for adding some CSS stuff.")
+    /**
+     * Handles the focus event, which can be useful for adding some CSS styling or other focus-related logic.
+     * @param {Event} event - The focus event object.
+     */
     focusEventHandler(event) { }
+    /**
+     * Performs a debounced validation on the specified control.
+     * @param {HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement} input - The control to validate.
+     * @param {number} debounceTime - The debounce time in milliseconds.
+     */
     debouncedValidate(input, debounceTime) {
+        //// Set the flag when validation starts
+        //this.validationInProgress.add(input.name);
         this._debouncerManager
             .getDebouncerForControl(input.name)
             .debounce(async () => {
             try {
-                console.log(`Debouncing ${input.name}`);
+                // Add a CSS class to indicate validation is in progress
+                // input.classList.add("validating");
+                this._logger.getLogger().info(`Debouncing ${input.name}`);
                 await this._validationService.validateControl(input);
             }
             catch (error) {
@@ -6766,9 +7017,20 @@ let EventService = class EventService {
                     ? error
                     : new Error(`Error in debouncedValidate for control ${input.name}: ${error}`));
             }
+            finally {
+                // Remove the CSS class once validation is complete
+                //input.classList.remove("validating");
+                //// Clear the flag when validation is done
+                //this.validationInProgress.delete(input.name);
+            }
         }, debounceTime);
     }
-    // Add the listeners to the form
+    /**
+     * Adds event listeners to the form based on the specified eventListeners record.
+     * @param {IForm} form - The form to which event listeners should be added.
+     * @param {Record<string, EventListener>} eventListeners - A record of event types and corresponding listeners.
+     * @returns {Promise<IForm>} - The form with listeners added.
+     */
     async addListeners(form, eventListeners) {
         // Add event listeners and store them in the map
         for (const [eventType, listener] of Object.entries(eventListeners)) {
@@ -6787,6 +7049,10 @@ let EventService = class EventService {
         }
         return form;
     }
+    /**
+     * Removes all event listeners from the specified form element.
+     * @param {HTMLFormElement} formElement - The form element from which to remove event listeners.
+     */
     async removeListeners(formElement) {
         const listeners = this.eventListenersMap.get(formElement);
         if (listeners) {
@@ -6805,6 +7071,11 @@ let EventService = class EventService {
             this.eventListenersMap.delete(formElement);
         }
     }
+    /**
+     * Cleans up resources associated with the specified form element.
+     * This involves removing event listeners and clearing any associated state.
+     * @param {HTMLFormElement} formElement - The form element for which to clean up resources.
+     */
     async cleanupResourcesForForm(formElement) {
         await this.removeListeners(formElement);
         const controls = formElement.elements;
@@ -6817,7 +7088,9 @@ let EventService = class EventService {
 };
 EventService = __decorate([
     (0,inversify__WEBPACK_IMPORTED_MODULE_1__.injectable)()
-    // TODO: Create Interface and setup container.
+    /**
+     * Manages event listeners for form controls and coordinates with validation and state management services.
+     */
     ,
     __param(0, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ObservableFormsCollection)),
     __param(1, (0,inversify__WEBPACK_IMPORTED_MODULE_2__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebouncerFactory)),
@@ -6829,8 +7102,9 @@ EventService = __decorate([
 ], EventService);
 
 /**
- *
- * @param element
+ * Determines if an element has a 'name' property and is an input, select, or textarea element.
+ * @param {Element} element - The element to check.
+ * @returns {boolean} - True if the element is a named control element, false otherwise.
  */
 function isNamedControlElement(element) {
     return ("name" in element &&
@@ -6853,11 +7127,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   ValidationService: () => (/* binding */ ValidationService)
 /* harmony export */ });
-/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
-/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/inject.js");
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/injectable.js");
+/* harmony import */ var inversify__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! inversify */ "./node_modules/inversify/es/annotation/inject.js");
 /* harmony import */ var _di_container_types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../di/container-types */ "./src/di/container-types.ts");
-/* harmony import */ var _classes_ValidationControl__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../classes/ValidationControl */ "./src/classes/ValidationControl.ts");
-/* harmony import */ var _classes_Result__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../classes/Result */ "./src/classes/Result.ts");
+/* harmony import */ var _classes_Result__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../classes/Result */ "./src/classes/Result.ts");
 var __decorate = (undefined && undefined.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -6873,22 +7146,25 @@ var __param = (undefined && undefined.__param) || function (paramIndex, decorato
 
 
 
-
 let ValidationService = class ValidationService {
     _logger;
     _formParser;
-    constructor(_logger, _formParser) {
+    _validationControlFactory;
+    _uiHandler;
+    constructor(_logger, _formParser, _validationControlFactory, _uiHandler) {
         this._logger = _logger;
         this._formParser = _formParser;
+        this._validationControlFactory = _validationControlFactory;
+        this._uiHandler = _uiHandler;
     }
     async validateControl(control) {
-        const validationControl = new _classes_ValidationControl__WEBPACK_IMPORTED_MODULE_1__.ValidationControl(control);
+        const validationControl = this._validationControlFactory.create(control);
         const getValidationInformationResults = this._formParser.getValidationInformation(control);
         if (!getValidationInformationResults.isSuccess) {
-            const error = _classes_Result__WEBPACK_IMPORTED_MODULE_2__.Result.handleError(getValidationInformationResults);
+            const error = _classes_Result__WEBPACK_IMPORTED_MODULE_1__.Result.handleError(getValidationInformationResults);
             this._logger.getLogger().error(error);
         }
-        const getValidationRulesResult = _classes_Result__WEBPACK_IMPORTED_MODULE_2__.Result.handleSuccess(getValidationInformationResults);
+        const getValidationRulesResult = _classes_Result__WEBPACK_IMPORTED_MODULE_1__.Result.handleSuccess(getValidationInformationResults);
         if (getValidationRulesResult === undefined) {
             this._logger.getLogger().error("Validation rules are undefined");
             return;
@@ -6897,24 +7173,30 @@ let ValidationService = class ValidationService {
         const { rules } = getValidationRulesResult;
         const validationResults = await validationControl.validate(rules);
         if (!validationResults.isSuccess) {
-            const error = _classes_Result__WEBPACK_IMPORTED_MODULE_2__.Result.handleError(validationResults);
-            // This is where we pass the error to the UIHandler we have not coded yet!!
-            this._logger.getLogger().info("Validation Error:", error);
-            return;
+            const error = _classes_Result__WEBPACK_IMPORTED_MODULE_1__.Result.handleError(validationResults);
+            this._logger.getLogger().error(error);
         }
-        const validationResult = _classes_Result__WEBPACK_IMPORTED_MODULE_2__.Result.handleSuccess(validationResults);
+        const validationResult = _classes_Result__WEBPACK_IMPORTED_MODULE_1__.Result.handleSuccess(validationResults);
         if (validationResult === undefined) {
             this._logger.getLogger().error("Validation result is undefined");
             return;
         }
-        console.log(validationResult);
+        const errorMessage = validationResult.errorMessages.find(m => m.length > 0);
+        //if (errorMessage === undefined) {
+        //    return;
+        //}
+        //validationResult.errorMessage= errorMessage;
+        console.log(errorMessage);
+        this._uiHandler.updateValidationMessage(validationResult);
     }
 };
 ValidationService = __decorate([
-    (0,inversify__WEBPACK_IMPORTED_MODULE_3__.injectable)(),
-    __param(0, (0,inversify__WEBPACK_IMPORTED_MODULE_4__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebuggingLogger)),
-    __param(1, (0,inversify__WEBPACK_IMPORTED_MODULE_4__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormParser)),
-    __metadata("design:paramtypes", [Object, Object])
+    (0,inversify__WEBPACK_IMPORTED_MODULE_2__.injectable)(),
+    __param(0, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.DebuggingLogger)),
+    __param(1, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.FormParser)),
+    __param(2, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.ValidationControlFactory)),
+    __param(3, (0,inversify__WEBPACK_IMPORTED_MODULE_3__.inject)(_di_container_types__WEBPACK_IMPORTED_MODULE_0__.TYPES.UIHandler)),
+    __metadata("design:paramtypes", [Object, Object, Object, Object])
 ], ValidationService);
 
 
@@ -6966,15 +7248,20 @@ let Debouncer = class Debouncer {
      * @param {number} waitMilliseconds - The number of milliseconds to wait before calling the function.
      */
     debounce(func, waitMilliseconds) {
+        console.log(`Debounce called. Waiting for ${waitMilliseconds}ms`);
         // Clear the existing timeout, if there is one
         if (this.timeoutId !== undefined) {
             clearTimeout(this.timeoutId);
         }
         // Start a new timeout
         this.timeoutId = setTimeout(() => {
+            console.log("Executing debounced function.");
             func();
             this.timeoutId = undefined;
         }, waitMilliseconds);
+    }
+    getTimeoutId() {
+        return this.timeoutId;
     }
     /**
      * Cancels any pending debounced function calls.
@@ -6983,7 +7270,11 @@ let Debouncer = class Debouncer {
      * that function from being called.
      */
     cancel() {
-        clearTimeout(this.timeoutId);
+        if (this.timeoutId !== undefined) {
+            console.log("Cancelling debounce.");
+            clearTimeout(this.timeoutId);
+            this.timeoutId = undefined;
+        }
     }
 };
 Debouncer = __decorate([

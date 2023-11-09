@@ -1,256 +1,222 @@
 ﻿import {
+    IDecoratedLogger,
     IValidationControl,
     IValidationResult,
     IValidationRule
 } from "../interfaces";
 import { Result } from "./Result";
 
+
 export class ValidationControl implements IValidationControl {
     control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
     isInteracted: boolean = false;
     validationRules: IValidationRule[] = [];
     isValid: boolean = false;
-    //rules: ValidationRule[];
+    isInteractedWith: boolean = false;
+    constructor(control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement, private readonly _logger: IDecoratedLogger
 
-    constructor(
-        control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     ) {
         this.control = control;
-        //this.rules = this.extractRules(control);
     }
 
+
     async validate(rules: IValidationRule[]): Promise<Result<IValidationResult>> {
-        let errorMessage = "";
-        let isValid = true;
+        try {
+            const value = this.control.value.trim();
 
-        const value = this.control.value.trim();
+            const validationResult: IValidationResult = {
+                control: this.control,
+                isValid: true,
+                errorMessage: "",
+                errorMessages: []
+            };
 
-        for (const rule of rules) {
-            console.log(rule);
-            switch (rule.type) {
-            case "required": {
-                if (!value) {
-                    errorMessage = rule.message;
-                    isValid = false;
+
+            for (const rule of rules) {
+                if (this.isInteracted) {
+                    continue;
                 }
-                break;
-            }
-            case "length": {
-                const { min, max } = rule.params;
-                const valueLength = value.length;
-
-                // If min or max are not defined, they won't be checked
-                const minLength = min ? parseInt(min, 10) : null;
-                const maxLength = max ? parseInt(max, 10) : null;
-
-                // Check against minimum length if specified
-                if (minLength !== null && valueLength < minLength) {
-                    errorMessage = rule.message;
-                    isValid = false;
-                }
-                // Check against maximum length if specified
-                else if (maxLength !== null && valueLength > maxLength) {
-                    errorMessage = rule.message;
-                    isValid = false;
-                }
-                break;
-            }
-            case "regex": {
-                // Ensure the pattern is provided, if not, skip this rule
-                if (!rule.params.pattern) {
+                const ruleResult = await this.applyRule(rule, value);
+                if (!ruleResult.isValid) {
+                    validationResult.isValid = false;
+                    validationResult.errorMessages.push(ruleResult.errorMessage);
+                    // Optionally, break here if you want to stop at the first failure
                     break;
                 }
 
-                // Create a regular expression from the pattern string
-                const pattern = new RegExp(rule.params.pattern);
-
-                // Test the current value against the regex pattern
-                if (!pattern.test(value)) {
-                    errorMessage = rule.message;
-                    isValid = false;
-                }
-                break;
             }
-
+            // If there were validation errors, mark the field as interacted.
+            if (validationResult.errorMessages.length > 0) {
+                this.isInteracted = true;
             }
-
-
-
-            // If already invalid, no need to check further
-            if (!isValid) {
-                break;
-            }
+            return new Result<IValidationResult>(validationResult);
+        }
+        catch (error) {
+            return new Result<IValidationResult>(error instanceof Error ? error : new Error(String(error)));
         }
 
-        // Here we're returning a Result object with the validation result
-        const validationResult: IValidationResult = {
-            isValid: isValid,
-            errorMessage: errorMessage,
-            control: this.control as HTMLInputElement
-        };
 
-        return new Result<IValidationResult>(isValid ? validationResult : new Error(errorMessage));
+    }
+    private async applyRule(rule: IValidationRule, value: string): Promise<IValidationResult> {
+
+        switch (rule.type) {
+        case "required":
+            return this.validateRequired(value, rule.message);
+        case "length": {
+            const minLength = rule.params.min ? parseInt(rule.params.min, 10) : 0; // Default to 0 if not specified
+            const maxLength = rule.params.max ? parseInt(rule.params.max, 10) : Infinity; // Default to Infinity if not specified
+            return this.validateLength(value, minLength, maxLength, rule.message);
+        }
+        case "maxlength": {
+            const maxLength = rule.params.max ? parseInt(rule.params.max, 10) : Infinity; // Default to Infinity if not specified
+            return this.validateLength(value, 0, maxLength, rule.message);
+        }
+        // minlength
+        case "minlength": {
+            const minLength = rule.params.min ? parseInt(rule.params.min, 10) : 0; // Default to 0 if not specified
+            return this.validateLength(value, minLength, Infinity, rule.message);
+        }
+        case "equalto": {
+            const compareToControlName = rule.params.other.replace(/^\*\./, ""); // Stripping out any leading '*.'
+            return this.validateEqualTo(value, compareToControlName, rule.message);
+        }
+        case "regex":
+            return rule.params.pattern
+                ? this.validateRegex(value, rule.params.pattern, rule.message)
+                : this.createValidationResult(true, "");
+        case "range": {
+            const min = rule.params.min !== undefined ? parseInt(rule.params.min, 10) : -Infinity;
+            const max = rule.params.max !== undefined ? parseInt(rule.params.max, 10) : Infinity;
+            return this.validateRange(value, min, max, rule.message);
+        }
+        case "email": {
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return this.validateRegex(value, emailPattern.source, rule.message || "Invalid email address.");
+        }
+        case "phone": {
+            const phonePattern = /^(?:\+1)?\s*(?:\([2-9]\d{2}\)\s*|\d{3}[\s.-]?)\d{3}[\s.-]?\d{4}$/;
+            return this.validateRegex(value, phonePattern.source, rule.message || "Invalid phone number format.");
+        }
+        case "url": {
+            const urlPattern = /^(http(s)?:\/\/.)[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)$/;
+            return this.validateRegex(value, urlPattern.source, rule.message || "Invalid URL format.");
+        }
+        case "creditcard":
+            return this.validateCreditCard(value, rule.message || "The credit card number is not valid.");
+        case "remote": {
+            const { url, additionalfields } = rule.params;
+            return await this.validateRemote(value, url, additionalfields,rule.message);
+        }
+        default:
+            break;
+        }
+        this.isValid = true;
+        return this.createValidationResult(true, "");
     }
 
 
-    /* private extractRules(
-        control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    ): ValidationRule[] {
-        const rules: ValidationRule[] = [];
-        const attributesArray = Array.from(control.attributes);
+    private validateRequired(value: string, message: string): IValidationResult {
+        if (!value) {
+            return this.createValidationResult(false, message);
+        }
+        return this.createValidationResult(true, "");
+    }
+    private validateEqualTo(value: string, compareToControlName: string, errorMessage: string): IValidationResult {
+        const compareControl = document.querySelector(`[name='${compareToControlName}']`) as HTMLInputElement;
+        const isValid = compareControl && value === compareControl.value.trim();
+        return this.createValidationResult(isValid, isValid ? "" : errorMessage || "The values do not match.");
+    }
+    private validateLength(value: string, minLength: number, maxLength: number, message: string): IValidationResult {
+        if (value.length < minLength || value.length > maxLength) {
+            return this.createValidationResult(false, message);
+        }
+        return this.createValidationResult(true, "");
+    }
 
-        // Loop over all attributes
-        for (const attr of attributesArray) {
-            // Check if attribute starts with 'data-val-'
-            if (attr.name.startsWith("data-val-")) {
-                // For required rule
-                if (attr.name === "data-val-required") {
-                    rules.push({
-                        type: "required",
-                        message: attr.value,
-                        priority: 0
-                    });
-                }
+    private validateRegex(value: string, pattern: string, message: string): IValidationResult {
+        const regex = new RegExp(pattern);
+        if (!regex.test(value)) {
+            return this.createValidationResult(false, message);
+        }
+        return this.createValidationResult(true, "");
+    }
+    private validateRange(value: string, min: number, max: number, message: string): IValidationResult {
+        const numericValue = parseFloat(value);
+        const isValid = numericValue >= min && numericValue <= max;
+        return this.createValidationResult(isValid, isValid ? "" : message);
+    }
+    private validateCreditCard(value: string, message: string): IValidationResult {
+        const isValid = this.isValidCreditCard(value);
+        return this.createValidationResult(isValid, isValid ? "" : message);
+    }
+    private async validateRemote(value: string, url: string, fields: string,errorMessage:string): Promise<IValidationResult> {
+        let validationUrl = `${url}?${encodeURIComponent(this.control.name)}=${encodeURIComponent(value)}`;
 
-                // For length rule
-                else if (attr.name === "data-val-length") {
-                    rules.push({
-                        type: "length",
-                        message: attr.value,
-                        maxLength: control.getAttribute("data-val-length-max")
-                            ? parseInt(
-                                  control.getAttribute("data-val-length-max")!
-                            )
-                            : undefined,
-                        minLength: control.getAttribute("data-val-length-min")
-                            ? parseInt(
-                                  control.getAttribute("data-val-length-min")!
-                            )
-                            : undefined,
-                        priority: 1
-                    });
-                }
+        // Append additional fields to the URL if they exist
+        if (fields) {
+            const fieldsArray = fields.split(",").map(field => field.trim().replace(/^\*\./, ""));
+            for (const fieldName of fieldsArray) {
+                if (fieldName !== this.control.name) {
+                    // Now 'fieldName' won't have the '*.' prefix.
+                    const additionalFieldElement = this.control.form?.querySelector(`[name="${fieldName}"]`) as HTMLInputElement | null;
 
-                // For range rule
-                else if (attr.name === "data-val-range") {
-                    rules.push({
-                        type: "range",
-                        message: attr.value,
-                        maxRange: control.getAttribute("data-val-range-max")
-                            ? parseInt(
-                                  control.getAttribute("data-val-range-max")!
-                            )
-                            : undefined,
-                        minRange: control.getAttribute("data-val-range-min")
-                            ? parseInt(
-                                  control.getAttribute("data-val-range-min")!
-                            )
-                            : undefined,
-                        priority: 2
-                    });
-                }
-
-                // For regex rule
-                else if (attr.name === "data-val-regex") {
-                    rules.push({
-                        type: "regex",
-                        message: attr.value,
-                        pattern:
-                            control.getAttribute("data-val-regex-pattern") ??
-                            undefined,
-                        priority: 3
-                    });
-                } else if (attr.name === "data-val-equalto") {
-                    const compareToControlName = control.getAttribute(
-                        "data-val-equalto-other"
-                    );
-                    if (compareToControlName) {
-                        const nameToSearch = compareToControlName.replace(
-                            "*.",
-                            ""
-                        ); // Removes "*." if present
-                        rules.push({
-                            type: "compare",
-                            message: attr.value,
-                            compareTo: nameToSearch,
-                            priority: 4
-                        });
+                    if (additionalFieldElement) {
+                        validationUrl += `&${encodeURIComponent(fieldName)}=${encodeURIComponent(additionalFieldElement.value)}`;
+                    } else {
+                        // Log for debugging purposes
+                        console.log(`Field with name ${fieldName} not found.`);
                     }
-                } else if (attr.name === "data-val-minlength") {
-                    rules.push({
-                        type: "minlength",
-                        message: attr.value,
-                        minLength: control.getAttribute(
-                            "data-val-minlength-min"
-                        )
-                            ? parseInt(
-                                  control.getAttribute(
-                                      "data-val-minlength-min"
-                                  )!
-                            )
-                            : undefined,
-                        priority: 5 // Assign appropriate priority
-                    });
-                } else if (attr.name === "data-val-phone") {
-                    rules.push({
-                        type: "phone",
-                        message: attr.value,
-                        priority: 6
-                    });
-                } else if (attr.name === "data-val-url") {
-                    rules.push({
-                        type: "url",
-                        message: attr.value,
-                        priority: 7
-                    });
-                } else if (attr.name === "data-val-creditcard") {
-                    rules.push({
-                        type: "creditcard",
-                        message: attr.value,
-                        priority: 8
-                    });
-                } else if (attr.name === "data-val-fileextensions") {
-                    rules.push({
-                        type: "fileextensions",
-                        message: attr.value,
-                        extensions:
-                            control.getAttribute(
-                                "data-val-fileextensions-extensions"
-                            ) ?? undefined,
-                        priority: 9
-                    });
-                } else if (attr.name === "data-val-remote") {
-                    rules.push({
-                        type: "remote",
-                        message: attr.value,
-                        remote:
-                            control.getAttribute("data-val-remote-url") ??
-                            undefined,
-                        additionalFields:
-                            control.getAttribute(
-                                "data-val-remote-additionalfields"
-                            ) ?? undefined,
-                        priority: 11
-                    });
-                } else if (attr.name === "data-val-email") {
-                    rules.push({
-                        type: "email",
-                        message: attr.value,
-                        priority: 10
-                    });
                 }
             }
         }
-        // Sort on Priority
-        return rules.sort((a, b) => a.priority - b.priority);
-    } */
+
+        try {
+            const response = await fetch(validationUrl);
+            if (!response.ok) {
+                throw new Error(`Server responded with status: ${response.status}`);
+            }
+            const validationResult = await response.json();
+
+            // The JSON response should contains at least a boolean `isValid` and may contain an optional string `errorMessage`
+            if (typeof validationResult.isValid !== "boolean") {
+                // The JSON does not have the expected shape.
+                throw new Error("Invalid response format from server.");
+            }
+            return this.createValidationResult(validationResult.isValid, errorMessage);
+        } catch (error) {
+            this._logger.getLogger().error(error);
+            let errorMessage = "Remote validation failed due to an unknown error. Please try again.";
+            if (error instanceof TypeError) {
+                // This usually indicates a network error.
+                errorMessage = "Network error: Unable to reach the validation server. Please check your connection.";
+            } else if (error instanceof Error) {
+                // Generic error, possibly from the fetch operation itself (e.g., server responded with a status code).
+                errorMessage = error.message;
+            }
+            return this.createValidationResult(false, errorMessage);
+        }
+    }
+
+    private createValidationResult(isValid: boolean, errorMessage?: string | null): IValidationResult {
+        return {
+            control: this.control,
+            isValid: isValid,
+            errorMessage: errorMessage || "", // If errorMessage is null/undefined, default to an empty string
+            errorMessages: errorMessage ? [errorMessage] : [] // Only include errorMessage in the array if it's truthy
+        };
+    }
 
 
     isValidCreditCard(value: string): boolean {
+        // First, check if the input has only digits (after removing spaces)
+        if (!/^\d+$/.test(value.replace(/\s+/g, ""))) {
+            return false; // Contains non-numeric characters
+        }
+
         // Remove all non-digit characters from the string
         const numericOnly = value.replace(/\D/g, "");
 
-        // Luhn's algorithm begins with the rightmost digit and moves left
+        // Implement Luhn Algorithm
         let sum = 0;
         let shouldDouble = false;
 
@@ -259,17 +225,15 @@ export class ValidationControl implements IValidationControl {
             let digit = parseInt(numericOnly.charAt(i), 10);
 
             if (shouldDouble) {
-                // If double of digit is more than 9, add the digits
-                // Otherwise, just double the value
                 if ((digit *= 2) > 9) digit -= 9;
             }
 
             sum += digit;
-            // Alternate the value of shouldDouble
             shouldDouble = !shouldDouble;
         }
 
         // If the sum modulo 10 is equal to 0, the number is valid
         return sum % 10 === 0;
     }
+
 }

@@ -23,7 +23,13 @@
 
     ],
     "rules": {
-        "prettier/prettier": "error",
+        "switch-colon-spacing": [
+            "error",
+            {
+                "before": false,
+                "after": true
+            }
+        ],
         "semi": [ "error", "always" ],
         "quotes": [ "error", "double" ],
         "indent": [ "error", 4 ],

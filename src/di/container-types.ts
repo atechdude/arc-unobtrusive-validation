@@ -13,7 +13,8 @@ const TYPES = {
     FormFactory: Symbol.for("IFormFactory"),
     FormParser: Symbol.for("IFormParser"),
     ObservableFormsCollection: Symbol.for("IObservableCollection"),
-    ValidationRulesRegistry: Symbol.for("IValidationRulesRegistry"),
-    ValidationService: Symbol.for("IValidationService")
+    ValidationService: Symbol.for("IValidationService"),
+    ValidationControlFactory: Symbol.for("IValidationControlFactory"),
+    UIHandler: Symbol.for("IUIHandler")
 };
 export { TYPES };

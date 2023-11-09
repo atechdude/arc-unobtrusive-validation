@@ -26,6 +26,14 @@ export class Form implements IForm {
         if (this.isAjax) {
             this.setupAjax();
         }
+        Array.from(this.elements).forEach((element) => {
+            if (element instanceof HTMLInputElement || element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement || element instanceof HTMLButtonElement) {
+                if (!element.id && element.name) {
+                    element.id = this.generateIdFromName(element.name);
+                    // If you also need to set up ARIA attributes or other properties, do it here.
+                }
+            }
+        });
     }
 
     setupAjax(): void {
@@ -34,5 +42,11 @@ export class Form implements IForm {
         if (updateTarget === undefined) {
             throw new Error("data-ajax-update attribute is undefined");
         }
+    }
+    private generateIdFromName(name: string): string {
+        // This method generates a valid ID based on the element's name attribute.
+        // You have several options for how you want to generate the ID. For example, a GUID, a hash, etc.
+        // For simplicity, we'll just use the name attribute.
+        return `form-control-${name}`;
     }
 }

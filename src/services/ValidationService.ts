@@ -3,9 +3,10 @@ import { TYPES } from "../di/container-types";
 import {
     IDecoratedLogger,
     IFormParser,
+    IUIHandler,
+    IValidationControlFactory,
     IValidationService
 } from "../interfaces";
-import { ValidationControl } from "../classes/ValidationControl";
 import { Result } from "../classes/Result";
 
 @injectable()
@@ -13,13 +14,15 @@ export class ValidationService implements IValidationService {
     constructor(
         @inject(TYPES.DebuggingLogger)
         private readonly _logger: IDecoratedLogger,
-        @inject(TYPES.FormParser) private readonly _formParser: IFormParser
+        @inject(TYPES.FormParser) private readonly _formParser: IFormParser,
+        @inject(TYPES.ValidationControlFactory) private readonly _validationControlFactory: IValidationControlFactory,
+        @inject(TYPES.UIHandler) private readonly _uiHandler: IUIHandler
     ) { }
 
     async validateControl(
         control: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     ): Promise<void> {
-        const validationControl = new ValidationControl(control);
+        const validationControl = this._validationControlFactory.create(control);
         const getValidationInformationResults =
             this._formParser.getValidationInformation(control);
 
@@ -42,17 +45,19 @@ export class ValidationService implements IValidationService {
         const validationResults = await validationControl.validate(rules);
         if (!validationResults.isSuccess) {
             const error = Result.handleError(validationResults);
-
-            // This is where we pass the error to the UIHandler we have not coded yet!!
-            this._logger.getLogger().info("Validation Error:", error);
-            return;
+            this._logger.getLogger().error(error);
         }
-
         const validationResult = Result.handleSuccess(validationResults);
         if (validationResult === undefined) {
             this._logger.getLogger().error("Validation result is undefined");
             return;
         }
-        console.log(validationResult);
+        const errorMessage = validationResult.errorMessages.find(m => m.length > 0);
+        //if (errorMessage === undefined) {
+        //    return;
+        //}
+        //validationResult.errorMessage= errorMessage;
+        console.log(errorMessage);
+        this._uiHandler.updateValidationMessage(validationResult);
     }
 }
