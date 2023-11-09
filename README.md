@@ -1,2 +1,2 @@
-# Working on a new validation lib for ASP.Net / MVC 
-# Not even close to being useable yet folks!
+# Validation is working
+# Need to wireup FormSubmitter and Test
