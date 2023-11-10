@@ -1,5 +1,5 @@
 # First Production Build
-# arc-unobtrusive-validation-auto.js uses the default Form Subitter. While arc-unobtrusive-validation.js allows you to listen to the following. document.addEventListener('form-valid', function (event) {
+# arc-unobtrusive-validation-auto.js uses the default Form Submitter. While arc-unobtrusive-validation.js allows you to listen to the following. document.addEventListener('form-valid', function (event) {
     // This function will run when a form is valid.
     // User can handle AJAX submission or whatever they want here.
     const form = event.detail;
