@@ -9,4 +9,9 @@
     clearControlsValidatedState(controlNames: string[]): void;
     setInitialValue(controlName: string, value: string): void;
     hasValueChanged(controlName: string, currentValue: string): boolean;
+    hasInitialValue(controlName: string): boolean
+    makeControlInteracted(controlName: string): void;
+    isControlInteracted(controlName: string): boolean;
+    clearControlInteractedState(controlName: string): void;
+    clearControlsInteractedState(controlNames: string[]): void;
 }

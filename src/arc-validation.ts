@@ -13,7 +13,8 @@ export default class UnobtrusiveValidation {
     private static defaultOptions: IOptions = {
         debug: true,
         logLevel: "info",
-        autoInit: true
+        autoInit: true,
+        useDefaultFormSubmitter: true
     };
 
     constructor(options: Partial<IOptions>) {

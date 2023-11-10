@@ -4,11 +4,12 @@ import { TYPES } from "../di/container-types";
 
 @injectable()
 /**
- * Manages the state of controls within a form, tracking whether they have been modified.
+ * Manages the state of form controls, tracking whether they have been modified (dirty), interacted with, or validated.
  */
 export class StateManager implements IStateManager {
     private dirtyMap: { [key: string]: boolean } = {};
     private validatedMap: { [key: string]: boolean } = {};
+    private interactedMap: { [key: string]: boolean } = {};
     private initialValues: { [key: string]: string } = {};
     /**
      * Constructs a new instance of the StateManager.
@@ -65,17 +66,34 @@ export class StateManager implements IStateManager {
             }
         });
     }
+    /**
+     * Marks a control as having passed validation.
+     * @param {string} controlName - The name of the control to mark as validated.
+     */
     setControlValidated(controlName: string): void {
         this.validatedMap[controlName] = true;
         this._logger.getLogger().info(`Control ${controlName} has been validated`);
     }
+    /**
+     * Checks if a control has passed validation.
+     * @param {string} controlName - The name of the control to check.
+     * @returns {boolean} - True if the control has been validated, otherwise false.
+     */
     isControlValidated(controlName: string): boolean {
         return !!this.validatedMap[controlName];
     }
+    /**
+     * Clears the validated state of a control, indicating that it should be validated again.
+     * @param {string} controlName - The name of the control to clear the validated state for.
+     */
     clearControlValidatedState(controlName: string): void {
         delete this.validatedMap[controlName];
         this._logger.getLogger().info(`Cleared validated state for control ${controlName}`);
     }
+    /**
+     * Clears the validated state for multiple controls at once.
+     * @param {string[]} controlNames - An array of control names to clear the validated state for.
+     */
     clearControlsValidatedState(controlNames: string[]): void {
         controlNames.forEach((controlName) => {
             if (this.validatedMap[controlName]) {
@@ -91,5 +109,51 @@ export class StateManager implements IStateManager {
     // Call this to check if the value has changed from the initial value
     hasValueChanged(controlName: string, currentValue: string): boolean {
         return this.initialValues[controlName] !== currentValue;
+    }
+    /**
+     * Checks if an initial value has been set for a control.
+     * @param {string} controlName - The name of the control to check.
+     * @returns {boolean} - True if an initial value has been set, otherwise false.
+     */
+    hasInitialValue(controlName: string): boolean {
+        return Object.keys(this.initialValues).includes(controlName);
+    }
+    /**
+     * Marks a control as interacted with by the user.
+     * @param {string} controlName - The name of the control to mark as interacted.
+     */
+    makeControlInteracted(controlName: string): void {
+        this.interactedMap[controlName] = true;
+        this._logger.getLogger().info(`Control ${controlName} is now marked as interacted`);
+    }
+
+    /**
+     * Checks if a control has been interacted with by the user.
+     * @param {string} controlName - The name of the control to check.
+     * @returns {boolean} - True if the control has been interacted with, otherwise false.
+     */
+    isControlInteracted(controlName: string): boolean {
+        return !!this.interactedMap[controlName];
+    }
+
+    /**
+     * Clears the interacted state of a control.
+     * @param {string} controlName - The name of the control to clear the interacted state for.
+     */
+    clearControlInteractedState(controlName: string): void {
+        delete this.interactedMap[controlName];
+        this._logger.getLogger().info(`Cleared interacted state for control ${controlName}`);
+    }
+
+    /**
+     * Clears the interacted state for multiple controls at once.
+     * @param {string[]} controlNames - An array of control names to clear the interacted state for.
+     */
+    clearControlsInteractedState(controlNames: string[]): void {
+        controlNames.forEach((controlName) => {
+            if (this.interactedMap[controlName]) {
+                this.clearControlInteractedState(controlName);
+            }
+        });
     }
 }

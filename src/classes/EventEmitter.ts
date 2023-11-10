@@ -7,7 +7,7 @@ export class EventEmitter<TEvents> implements IEventEmitter<TEvents> {
         [K in keyof TEvents]?: ((data: TEvents[K]) => void)[];
     } = {};
     constructor() {
-        console.log("EventEmitter constructor");
+
     }
     on<K extends keyof TEvents>(
         event: K,

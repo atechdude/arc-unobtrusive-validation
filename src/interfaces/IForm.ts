@@ -1,6 +1,6 @@
 ﻿export interface IForm {
+    isValid: boolean;
     formElement: HTMLFormElement;
-    isAjax: boolean;
     attributes: NamedNodeMap;
     elements: HTMLFormControlsCollection;
     element: Element;

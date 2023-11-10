@@ -5,9 +5,11 @@ import { IOptions } from "../interfaces";
 export class Options implements IOptions {
     debug: boolean;
     logLevel: string;
+    useDefaultFormSubmitter: boolean;
     constructor() {
         this.debug = false;
         this.logLevel = "info";
+        this.useDefaultFormSubmitter = true;
     }
 
     autoInit: boolean = true;

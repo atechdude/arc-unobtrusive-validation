@@ -14,7 +14,7 @@ import { Debouncer } from "../utils/Debouncer";
 @injectable()
 export class DebouncerFactory implements IDebouncerFactory {
     constructor() {
-        console.log("DebouncerFactory constructor");
+
     }
     /**
      * Creates a new instance of `Debouncer`.

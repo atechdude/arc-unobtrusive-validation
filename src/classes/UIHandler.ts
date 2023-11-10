@@ -3,9 +3,19 @@ import { TYPES } from "../di/container-types";
 import { IDecoratedLogger, IUIHandler, IValidationResult } from "../interfaces";
 
 @injectable()
+/**
+ * Handles the display and hiding of validation messages in the UI.
+ */
 export class UIHandler implements IUIHandler {
+    /**
+     * Creates an instance of UIHandler.
+     * @param {IDecoratedLogger} _logger - Logger for logging information and errors.
+     */
     constructor(@inject(TYPES.DebuggingLogger) private readonly _logger: IDecoratedLogger) { }
-
+    /**
+     * Updates the UI to show or hide the validation message based on the validation result.
+     * @param {IValidationResult} validationResult - The result of the validation check.
+     */
     updateValidationMessage(validationResult: IValidationResult): void {
         if (validationResult === undefined) {
             return;
@@ -23,6 +33,12 @@ export class UIHandler implements IUIHandler {
             this.hideValidationMessage(control as HTMLInputElement);
         }
     }
+    /**
+     * Shows the validation error message next to the form control.
+     * @param {HTMLInputElement} control - The form control related to the validation message.
+     * @param {string} message - The validation error message to display.
+     * @private
+     */
     private showValidationMessage(control: HTMLInputElement, message: string): void {
         // Check if the control is contained within a parent element
         const parentElement = control.parentElement;
@@ -53,7 +69,11 @@ export class UIHandler implements IUIHandler {
             console.warn(`No validation message element found for control with name: ${control.name}`);
         }
     }
-
+    /**
+     * Hides the validation message for the form control.
+     * @param {HTMLInputElement} control - The form control related to the validation message.
+     * @private
+     */
     private hideValidationMessage(control: HTMLInputElement): void {
         // Check if the control is contained within a parent element
         const parentElement = control.parentElement;
@@ -83,17 +103,28 @@ export class UIHandler implements IUIHandler {
             console.warn(`No validation message element found for control with name: ${control.name}`);
         }
     }
-    private getValidationMessageElement(control: HTMLInputElement): HTMLElement | null {
-
-
-        let msgElement: HTMLElement | null = null;
-
-        //msgElement = control.parentNode//querySelector(`[data-valmsg-for="${control.name}"]`);
-        if (control.parentElement) {
-            msgElement = control.parentElement.querySelector(`[data-valmsg-for="${control.name}"]`);
-
+    /**
+     * Retrieves the corresponding validation message element for a given form control.
+     * @param {HTMLInputElement} control - The form control to find the validation message element for.
+     * @returns {HTMLElement | null} - The element that displays the validation message, if found; otherwise, null.
+     * @private
+     */
+    private getValidationMessageElement(control: HTMLInputElement): HTMLElement | null{
+        // Check if the control is contained within a parent element
+        if (!control.parentElement) {
+            console.error(`Parent element not found for control with name: ${control.name} and id: ${control.id}`);
+            return null; // Exit the function if there is no parent element
         }
 
-        return msgElement;
+        // Attempt to find the validation message element
+        const msgElement = control.parentElement.querySelector(`[data-valmsg-for="${control.name}"]`);
+
+        // Log an error if the validation message element is not found
+        if (!msgElement) {
+            console.error(`Validation message element not found for control: ${control}  with name: ${control.name} and id: ${control.id}`);
+        }
+
+        return msgElement as HTMLElement; // Will be null if not found, or the HTMLElement if found
     }
+
 }

@@ -9,7 +9,7 @@ export interface IEventService {
     setupHandlers(form: IForm): void;
     createInputHandler(debounceTime: number): EventListener;
     createBlurHandler(): EventListener;
-    focusEventHandler(event: Event): void;
+    createFocusHandler(): EventListener;
     debouncedValidate(
         input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
         debounceTime: number

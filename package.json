@@ -1,35 +1,40 @@
 {
-  "name": "arc-unobtrusive-validation",
-  "version": "1.0.0",
-  "description": "",
-  "main": "arc-unobtrusive-validation.js",
-  "scripts": {
-    "lint": "eslint \"src/**/*.{js,ts,tsx}\"",
-    "build": "tsc",
-    "watch": "tsc --watch",
-    "webpack-build": "webpack --mode development",
-    "webpack-build-prod": "webpack --mode production",
-    "webpack-start": "webpack --watch --mode development",
-    "copy-dist": "xcopy \"C:\\Visual Studio Projects\\DFWForSale\\ArcValidation\\dist\\arc-unobtrusive-validation.js\" \"C:\\Visual Studio Projects\\DfwForSale\\WebUI\\wwwroot\\lib\\arc-unobtrusive-validation\\dist\" /Y && xcopy \"C:\\Visual Studio Projects\\DFWForSale\\ArcValidation\\dist\\arc-unobtrusive-validation.js.map\" \"C:\\Visual Studio Projects\\DfwForSale\\WebUI\\wwwroot\\lib\\arc-unobtrusive-validation\\dist\" /Y"
-  },
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^6.10.0",
-    "@typescript-eslint/parser": "^6.10.0",
-    "clean-webpack-plugin": "^4.0.0",
-    "eslint": "^8.53.0",
-    "eslint-config-prettier": "^9.0.0",
-    "eslint-plugin-jsdoc": "^46.8.2",
-    "eslint-plugin-prettier": "^5.0.1",
-    "eslint-prettier": "^0.0.0-empty",
-    "inversify": "^6.0.2",
-    "loglevel": "^1.8.1",
-    "prettier": "^3.0.3",
-    "reflect-metadata": "^0.1.13",
-    "ts-loader": "^9.5.0",
-    "typescript": "^5.2.2",
-    "webpack": "^5.89.0",
-    "webpack-cli": "^5.1.4"
-  }
+    "name": "arc-unobtrusive-validation",
+    "version": "1.0.0",
+    "description": "Unobtrusive Validation Library for ASP.NET / MVC and Razor Pages",
+    "main": "arc-validation.js",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/atechdude/arc-unobtrusive-validation.git"
+    },
+    "scripts": {
+        "build-tsc": "tsc",
+        "lint": "eslint \"src/**/*.{js,ts,tsx}\"",
+        "build": "webpack --mode production",
+        "watch": "webpack --watch --mode development",
+        "analyze": "webpack --mode production",
+        "copy-dist": "xcopy .\\dist\\* \"C:\\Visual Studio Projects\\DfwForSale\\WebUI\\wwwroot\\lib\\arc-unobtrusive-validation\\dist\\\" /E /Y /I"
+    },
+    "author": "HaxxorNulled",
+    "license": "LGPL-3.0-or-later",
+    "devDependencies": {
+        "@typescript-eslint/eslint-plugin": "^6.10.0",
+        "@typescript-eslint/parser": "^6.10.0",
+        "clean-webpack-plugin": "^4.0.0",
+        "eslint": "^8.53.0",
+        "eslint-config-prettier": "^9.0.0",
+        "eslint-plugin-jsdoc": "^46.8.2",
+        "eslint-plugin-prettier": "^5.0.1",
+        "eslint-prettier": "^0.0.0-empty",
+        "inversify": "^6.0.2",
+        "loglevel": "^1.8.1",
+        "prettier": "^3.0.3",
+        "reflect-metadata": "^0.1.13",
+        "terser-webpack-plugin": "^5.3.9",
+        "ts-loader": "^9.5.0",
+        "typescript": "^5.2.2",
+        "webpack": "^5.89.0",
+        "webpack-bundle-analyzer": "^4.9.1",
+        "webpack-cli": "^5.1.4"
+    }
 }

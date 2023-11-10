@@ -9,31 +9,23 @@ import {
     IEventService,
     IForm,
     IObservableCollection,
+    IOptions,
     IStateManager,
     IValidationService
 } from "../interfaces";
-
-@injectable()
-
 /**
- * Manages event listeners for form controls and coordinates with validation and state management services.
+ * Manages event handling for form validation, including setting up and removing listeners, and debouncing validation calls.
  */
+@injectable()
 export class EventService implements IEventService {
     eventListenersMap: WeakMap<Element, Record<string, EventListener>> =
         new WeakMap();
     dirtyMap: { [key: string]: boolean } = {};
     debouncers: { [key: string]: Debouncer } = {};
-    private validationInProgress: Set<string> = new Set();
-    /**
-     * Initializes a new instance of the EventService.
-     * @param {IObservableCollection<IForm>} _observableFormsCollection - Collection of observable forms.
-     * @param {IDebouncerFactory} _debounceFactory - Factory for creating debouncers.
-     * @param {IValidationService} _validationService - Service for performing validation.
-     * @param {IStateManager} _stateManager - State manager to track control dirty state.
-     * @param {IDebouncerManager} _debouncerManager - Manager for debouncing validation calls.
-     * @param {IDecoratedLogger} _logger - Logger for diagnostic messages.
-     */
+
+
     constructor(
+        @inject(TYPES.Options) private readonly _options: IOptions,
         @inject(TYPES.ObservableFormsCollection)
         private readonly _observableFormsCollection: IObservableCollection<IForm>,
         @inject(TYPES.DebouncerFactory)
@@ -50,13 +42,12 @@ export class EventService implements IEventService {
 
         this._observableFormsCollection.addObserver(this);
     }
-
     /**
-     * Reacts to notifications about form collection changes, setting up or cleaning up event listeners as necessary.
-     * @param {IChange<IForm>} change - The change notification object containing the type of change and the form affected.
+     * Responds to changes in the form collection, such as when a form is added.
+     * @param {IChange<IForm>} change - The object describing the change that occurred in the form collection.
+     * @returns {Promise<void>}
      */
     async notify(change: IChange<IForm>): Promise<void> {
-        console.log("EventService notify");
         const { type: changeType, item: form } = change;
 
         if (changeType !== "add" || !form.formElement) {
@@ -69,152 +60,17 @@ export class EventService implements IEventService {
         // Setup the handlers for the form
         this.setupHandlers(form);
 
-        // Add the listeners to the form.
-        // Note: It might be a good idea to check if the form element has already listeners attached.
-        // If listeners exist, you may not need to add them again or you might want to update them.
+        // Add Listeners for the form
         const listeners = this.eventListenersMap.get(change.item.formElement);
         if (listeners) {
             await this.addListeners(form, listeners);
         }
     }
     /**
-     * Sets up event handlers for all controls in the specified form.
-     * @param {IForm} form - The form for which to set up event handlers.
-     */
-    setupHandlers(form: IForm): void {
-        // Loop over each control in the form
-        const controls = Array.from(form.elements);
-
-        // Initialize listeners outside the loop
-        const listeners: Record<string, EventListener> = {};
-
-        controls.forEach((element) => {
-            if (
-                element instanceof HTMLInputElement ||
-                element instanceof HTMLTextAreaElement ||
-                element instanceof HTMLSelectElement
-            ) {
-                // Add the event handlers for the control
-                const inputEventHandler = this.createInputHandler(500);
-                const blurEventHandler = this.createBlurHandler();
-                const focusEventHandler = this.focusEventHandler;
-
-                // Accumulate listeners instead of re-initializing them
-                listeners["input"] = inputEventHandler as EventListener;
-                listeners["focus"] = focusEventHandler as EventListener;
-                listeners["blur"] = blurEventHandler as EventListener;
-            }
-        });
-
-        // Set the accumulated listeners for the form element after the loop
-        this.eventListenersMap.set(form.formElement, listeners);
-    }
-
-    createInputHandler(debounceTime: number): EventListener {
-        return (event: Event) => {
-            const control = event.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
-
-            // Check if the value has changed from the initial value to mark as dirty.
-            if (this._stateManager.hasValueChanged(control.name, control.value)) {
-                this._stateManager.makeControlDirty(control.name);
-                // Reset the validated state since the value has changed.
-                this._stateManager.clearControlValidatedState(control.name);
-                // Update the initial value to the new value
-                this._stateManager.setInitialValue(control.name, control.value);
-                this.debouncedValidate(control, debounceTime);
-            }
-        };
-    }
-
-
-    createBlurHandler(): EventListener {
-        return async (event: Event) => {
-            console.log("Executing blur handler");
-
-            const focusEvent = event as FocusEvent;
-            const target = focusEvent.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
-            const relatedTarget = focusEvent.relatedTarget as Element;
-
-            // Check if the related target is within the same form as the target.
-            if (!relatedTarget || !target.form?.contains(relatedTarget)) {
-                console.log("Focus moved outside the form or to a non-focusable element. Canceling blur validation.");
-                return;
-            }
-
-
-            // Only proceed with blur validation if the control is dirty (value changed)
-            // and has not been previously validated since the last change.
-            if (this._stateManager.isControlDirty(target.name) && !this._stateManager.isControlValidated(target.name)) {
-                try {
-                    await this._validationService.validateControl(target);
-
-                    // After validation, clear the dirty state and mark the control as validated.
-                    this._stateManager.clearControlDirtyState(target.name);
-                    this._stateManager.setControlValidated(target.name);
-                } catch (error) {
-                    this._logger.getLogger().error(
-                        error instanceof Error ? error : new Error("Error in blurEventHandler: " + error)
-                    );
-                }
-            } else {
-                console.log(`Skipping validation for ${target.name} as it hasn't changed or has been previously validated.`);
-            }
-        };
-    }
-
-    /**
-     * Handles the focus event, which can be useful for adding some CSS styling or other focus-related logic.
-     * @param {Event} event - The focus event object.
-     */
-    focusEventHandler(event: Event): void { }
-
-    /**
-     * Performs a debounced validation on the specified control.
-     * @param {HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement} input - The control to validate.
-     * @param {number} debounceTime - The debounce time in milliseconds.
-     */
-    debouncedValidate(
-        input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
-        debounceTime: number
-    ): void {
-        //// Set the flag when validation starts
-        //this.validationInProgress.add(input.name);
-
-        this._debouncerManager
-            .getDebouncerForControl(input.name)
-            .debounce(async () => {
-                try {
-                    // Add a CSS class to indicate validation is in progress
-                   // input.classList.add("validating");
-
-                    this._logger.getLogger().info(`Debouncing ${input.name}`);
-                    await this._validationService.validateControl(
-                        input as HTMLInputElement
-                    );
-                } catch (error) {
-                    this._logger
-                        .getLogger()
-                        .error(
-                            error instanceof Error
-                                ? error
-                                : new Error(
-                                    `Error in debouncedValidate for control ${input.name}: ${error}`
-                                )
-                        );
-                } finally {
-                    // Remove the CSS class once validation is complete
-                    //input.classList.remove("validating");
-                    //// Clear the flag when validation is done
-                    //this.validationInProgress.delete(input.name);
-                }
-            }, debounceTime);
-    }
-
-    /**
-     * Adds event listeners to the form based on the specified eventListeners record.
-     * @param {IForm} form - The form to which event listeners should be added.
-     * @param {Record<string, EventListener>} eventListeners - A record of event types and corresponding listeners.
-     * @returns {Promise<IForm>} - The form with listeners added.
+     * Attaches event listeners to a form based on a provided map of event types and listeners.
+     * @param {IForm} form - The form to attach listeners to.
+     * @param {Record<string, EventListener>} eventListeners - A record of event types and their corresponding event listeners.
+     * @returns {Promise<IForm>} - The form with the event listeners attached.
      */
     private async addListeners(
         form: IForm,
@@ -234,6 +90,179 @@ export class EventService implements IEventService {
             }
         }
         return form;
+    }
+    /**
+     * Sets up event handlers for all interactive elements within a form.
+     * @param {IForm} form - The form for which event handlers are to be set up.
+     */
+    setupHandlers(form: IForm): void {
+        // Loop over each control in the form
+        const controls = Array.from(form.elements);
+
+        // Initialize listeners outside the loop
+        const listeners: Record<string, EventListener> = {};
+
+        controls.forEach((element) => {
+            if (
+                element instanceof HTMLInputElement ||
+                element instanceof HTMLTextAreaElement ||
+                element instanceof HTMLSelectElement
+            ) {
+                // Add the event handlers for the control
+                const inputEventHandler = this.createInputHandler(500);
+                const blurEventHandler = this.createBlurHandler();
+                const focusEventHandler = this.createFocusHandler();
+                if (this._options.useDefaultFormSubmitter) {
+                    const submitEventHandler = this.createSubmitHandler(form);
+                    listeners["submit"] = submitEventHandler as EventListener;
+                }
+
+
+
+                // Accumulate listeners instead of re-initializing them
+                listeners["input"] = inputEventHandler as EventListener;
+                listeners["focus"] = focusEventHandler as EventListener;
+                listeners["blur"] = blurEventHandler as EventListener;
+
+            }
+        });
+
+        // Set the accumulated listeners for the form element after the loop
+        this.eventListenersMap.set(form.formElement, listeners);
+    }
+
+    /**
+     * Creates a submit event handler for the form. Please note that this handler is only used if the useDefaultFormSubmitter option is set to true, which is the default.
+     * @param {IForm} form - The form for which to create the submit handler.
+     * @returns {EventListener} - An event listener that handles the submit event for the form.
+     */
+    createSubmitHandler(form: IForm): EventListener {
+        return async (event: Event) => {
+            if (this._options.useDefaultFormSubmitter) {
+                event.preventDefault();
+            }
+            // Perform validation before submission
+            const isFormValid = await this._validationService.validateForm(form);
+
+            if (isFormValid) {
+
+                if (this._options.useDefaultFormSubmitter) {
+                    form.formElement.submit();
+                } else {
+                    const validationEvent = new CustomEvent("form-valid", {
+                        detail: form,
+                        bubbles: true, // This allows the event to bubble up through the DOM
+                        cancelable: true // This allows the event to be cancelable
+
+                    });
+                    form.formElement.dispatchEvent(validationEvent);
+                }
+            }
+            else {
+                // Form is invalid
+                const validationEvent = new CustomEvent("form-invalid", {
+                    detail: form,
+                    bubbles: true, // This allows the event to bubble up through the DOM
+                    cancelable: true // This allows the event to be cancelable
+                });
+
+                form.formElement.dispatchEvent(validationEvent);
+            }
+        };
+    }
+    /**
+     * Creates a debounced event handler for input events on form controls.
+     * @param {number} debounceTime - The time in milliseconds to wait before triggering the validation after the last input event.
+     * @returns {EventListener}
+     */
+    createInputHandler(debounceTime: number): EventListener {
+        return (event: Event) => {
+            const control = event.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+
+            // Mark the control as interacted upon user input. Dont confuse focus with input people.
+            this._stateManager.makeControlInteracted(control.name);
+
+            // Check if the value has changed from the initial value to mark as dirty.
+            if (this._stateManager.hasValueChanged(control.name, control.value)) {
+                this._stateManager.makeControlDirty(control.name);
+                // Reset the validated state since the value has changed.
+                this._stateManager.clearControlValidatedState(control.name);
+                // Debounce the validation logic to avoid excessive validation calls
+                this.debouncedValidate(control, debounceTime);
+            }
+
+            // You may want to always set the initial value when the control is first interacted with
+            // This can be done when the form is first loaded or here if not done previously
+            if (!this._stateManager.hasInitialValue(control.name)) {
+                this._stateManager.setInitialValue(control.name, control.value);
+            }
+        };
+    }
+    /**
+     * Creates a blur event handler for form controls.
+     * The handler triggers validation under certain conditions when the control loses focus.
+     * @returns {EventListener} An event listener that handles the blur event for a form control.
+     */
+    createBlurHandler(): EventListener {
+        return async (event: Event) => {
+            const focusEvent = event as FocusEvent;
+            const target = focusEvent.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+            const relatedTarget = focusEvent.relatedTarget as Element;
+
+            // Check if the related target is not within the same form as the target or if it's non-focusable.
+            if (!relatedTarget || !target.form?.contains(relatedTarget)) {
+
+                // If the control is dirty and not yet validated, validate it.
+                if (this._stateManager.isControlDirty(target.name) && !this._stateManager.isControlValidated(target.name)) {
+                    await this.validateAndHandleControl(target);
+                }
+                return;
+            }
+
+            // Proceed with validation if the control is dirty or interacted with.
+            if (this._stateManager.isControlDirty(target.name) || this._stateManager.isControlInteracted(target.name)) {
+                await this.validateAndHandleControl(target);
+            }
+        };
+    }
+    /**
+     * Creates a focus event handler for form controls.
+     * Currently, this handler does not perform any action, but it is set up for future enhancements.
+     * @returns {EventListener} An event listener that handles the focus event for a form control.
+     */
+    createFocusHandler(): EventListener {
+        return async (event: Event) => { };
+    }
+
+    /**
+     * Validates a control with a debounced call to prevent excessive validation triggers during user input.
+     * @param {HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement} input - The control to validate.
+     * @param {number} debounceTime - The time in milliseconds to debounce the validation calls.
+     */
+    debouncedValidate(
+        input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
+        debounceTime: number
+    ): void {
+        this._debouncerManager
+            .getDebouncerForControl(input.name)
+            .debounce(async () => {
+                try {
+                    this._logger.getLogger().info(`Debouncing ${input.name}`);
+                    await this._validationService.validateControl(
+                        input as HTMLInputElement
+                    );
+                } catch (error) {
+                    this._logger
+                        .getLogger()
+                        .error(
+                            error instanceof Error
+                                ? error
+                                : new Error(
+                                    `Error in debouncedValidate for control ${input.name}: ${error}`
+                                )
+                        );
+                }
+            }, debounceTime);
     }
     /**
      * Removes all event listeners from the specified form element.
@@ -272,6 +301,20 @@ export class EventService implements IEventService {
 
         this._stateManager.clearControlsDirtyState(namesToClear);
         this._debouncerManager.clearDebouncersForControls(namesToClear);
+    }
+
+    async validateAndHandleControl(control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): Promise<void> {
+        try {
+            await this._validationService.validateControl(control);
+
+            // After validation, clear the dirty state and mark the control as validated.
+            this._stateManager.clearControlDirtyState(control.name);
+            this._stateManager.setControlValidated(control.name);
+        } catch (error) {
+            this._logger.getLogger().error(
+                error instanceof Error ? error : new Error("Error in blurEventHandler: " + error)
+            );
+        }
     }
 }
 /**

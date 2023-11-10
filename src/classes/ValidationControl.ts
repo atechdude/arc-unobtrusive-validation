@@ -6,20 +6,30 @@
 } from "../interfaces";
 import { Result } from "./Result";
 
-
+/**
+ * Represents a control element with validation logic.
+ */
 export class ValidationControl implements IValidationControl {
     control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
     isInteracted: boolean = false;
     validationRules: IValidationRule[] = [];
     isValid: boolean = false;
     isInteractedWith: boolean = false;
+    /**
+     * Creates an instance of the ValidationControl class.
+     * @param {HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement} control - The control to be validated.
+     * @param {IDecoratedLogger} _logger - Logger for debugging and error messages.
+     */
     constructor(control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement, private readonly _logger: IDecoratedLogger
 
     ) {
         this.control = control;
     }
-
-
+    /**
+     * Validates the control against a set of rules.
+     * @param {IValidationRule[]} rules - An array of validation rules to apply to the control.
+     * @returns {Promise<Result<IValidationResult>>} The result of the validation, wrapped in a Result object.
+     */
     async validate(rules: IValidationRule[]): Promise<Result<IValidationResult>> {
         try {
             const value = this.control.value.trim();
@@ -54,9 +64,13 @@ export class ValidationControl implements IValidationControl {
         catch (error) {
             return new Result<IValidationResult>(error instanceof Error ? error : new Error(String(error)));
         }
-
-
     }
+    /**
+     * Applies a validation rule to the current control's value.
+     * @param {IValidationRule} rule - The validation rule to apply.
+     * @param {string} value - The current value of the control.
+     * @returns {Promise<IValidationResult>} The result of applying the validation rule.
+     */
     private async applyRule(rule: IValidationRule, value: string): Promise<IValidationResult> {
 
         switch (rule.type) {
@@ -107,6 +121,12 @@ export class ValidationControl implements IValidationControl {
             const { url, additionalfields } = rule.params;
             return await this.validateRemote(value, url, additionalfields,rule.message);
         }
+        // Inside the applyRule method
+        case "fileextensions": {
+            return this.validateFileExtensions(value, rule.params.extensions, rule.message);
+        }
+        // ...
+
         default:
             break;
         }
@@ -196,6 +216,15 @@ export class ValidationControl implements IValidationControl {
             return this.createValidationResult(false, errorMessage);
         }
     }
+    private validateFileExtensions(value: string, allowedExtensions: string, message: string): IValidationResult {
+        // Split the extensions into an array and prepare for comparison
+        const extensionsArray = allowedExtensions.split(",").map(ext => ext.trim().toLowerCase());
+        // Extract the file extension from the value
+        const fileExtension = value.slice(value.lastIndexOf(".")).toLowerCase();
+        // Check if the file extension is included in the allowed extensions
+        const isValid = extensionsArray.includes(fileExtension);
+        return this.createValidationResult(isValid, isValid ? "" : message);
+    }
 
     private createValidationResult(isValid: boolean, errorMessage?: string | null): IValidationResult {
         return {
@@ -207,7 +236,7 @@ export class ValidationControl implements IValidationControl {
     }
 
 
-    isValidCreditCard(value: string): boolean {
+    private isValidCreditCard(value: string): boolean {
         // First, check if the input has only digits (after removing spaces)
         if (!/^\d+$/.test(value.replace(/\s+/g, ""))) {
             return false; // Contains non-numeric characters
