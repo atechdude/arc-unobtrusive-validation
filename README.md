@@ -1,5 +1,8 @@
 # ARC Unobtrusive Validation
 
+## Updates
+Adding in support for user defined Form Submit handlers as well as what I think is proper validation for radio buttons and checkboxes.
+
 ARC Unobtrusive Validation is a TypeScript-based library that integrates with ASP.NET MVC and Razor Pages to provide a streamlined client-side validation experience. It replaces the need for jQuery and jQuery unobtrusive validation scripts, allowing developers to perform validation against Data Annotations directly on the client side without extra dependencies.
 
 ## Motivation
@@ -28,7 +31,7 @@ ARC Unobtrusive Validation aims to provide developers with a modern validation t
 Contributions are welcome! Feel free to submit issues, pull requests, or suggestions to help improve the library.
 
 ---
-
+Demo Site and Documentation is coming.
 For detailed documentation and setup instructions, please visit the [official documentation](#).
 
 Happy validating!
