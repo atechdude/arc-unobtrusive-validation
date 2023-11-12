@@ -23,6 +23,7 @@ module.exports = {
     resolve: {
         extensions: [".ts", ".tsx", ".js"]
     },
+    devtool: "source-map",
     module: {
         rules: [
             {
@@ -33,18 +34,18 @@ module.exports = {
         ]
     },
     plugins: [
-        new CleanWebpackPlugin(),
-        new BundleAnalyzerPlugin({
-            // You can set `analyzerMode` to `server`, `static`, or `disabled`.
-            // In `server` mode a server is started, `static` generates a .html file,
-            // and `disabled` doesn't generate any output but you can still use it as a module in your code.
-            analyzerMode: "static",
+        new CleanWebpackPlugin()
+        //new BundleAnalyzerPlugin({
+        //    // You can set `analyzerMode` to `server`, `static`, or `disabled`.
+        //    // In `server` mode a server is started, `static` generates a .html file,
+        //    // and `disabled` doesn't generate any output but you can still use it as a module in your code.
+        //    analyzerMode: "static",
 
-            // Path to generated report file, relative to the output directory
-            reportFilename: "report.html",
+        //    // Path to generated report file, relative to the output directory
+        //    reportFilename: "report.html",
 
-            // Automatically open the report in the browser
-            openAnalyzer: true
-        })
+        //    // Automatically open the report in the browser
+        //    openAnalyzer: true
+        //})
     ]
 };

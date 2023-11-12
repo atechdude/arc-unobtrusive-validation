@@ -37,7 +37,9 @@ export class FormParser implements IFormParser {
         ["url", 10]
         // ... other rules with their respective priorities
     ]);
+
     constructor(@inject(TYPES.Logger) private readonly _logger: ILogger) { }
+
     /**
      * Parses the given HTML form element and extracts validation rules for each input.
      * @param {HTMLFormElement} formElement - The form element to parse.
@@ -79,43 +81,6 @@ export class FormParser implements IFormParser {
         }
     }
 
-    /**
-     * Parses the given HTML form element and extracts validation rules for each input.
-     * @param {HTMLFormElement} formElement - The form element to parse.
-     * @returns {Record<string, IValidationRule[]>} A record object where each key is the
-     * name of a form control and each value is an array of validation rules associated
-     * with that control. If an error occurs during parsing, it logs the error and
-     * returns an empty object.
-     */
-    parse1(formElement: HTMLFormElement): Record<string, IValidationRule[]> {
-        try {
-            const validationRules: Record<string, IValidationRule[]> = {};
-            const inputs = Array.from(formElement.elements) as HTMLElement[];
-
-            inputs.forEach((input) => {
-                if (
-                    (input instanceof HTMLInputElement ||
-                        input instanceof HTMLSelectElement ||
-                        input instanceof HTMLTextAreaElement) &&
-                    input.name
-                ) {
-                    const rules: IValidationRule[] =
-                        this.getValidationRules(input);
-                    validationRules[input.name] = rules;
-                }
-            });
-
-            return validationRules;
-        } catch (error) {
-            this._logger.error(
-                `Error parsing form: ${formElement.name}`,
-                error
-            );
-            // If parsing fails, return an empty object or consider rethrowing the exception
-            // after logging depending on how your application should respond to such situations.
-            return {};
-        }
-    }
     /**
      * Extracts validation rules from an input element's data attributes.
      * @param {HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement} input - The input element to extract rules from.

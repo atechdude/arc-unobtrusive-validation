@@ -6,7 +6,8 @@ import {
     IFormFactory,
     IFormManager,
     IObservableCollection,
-    IStateManager
+    IStateManager,
+    ISubmitHandler
 } from "../interfaces";
 import { TYPES } from "../di/container-types";
 import { Result } from "../classes/Result";
@@ -21,23 +22,23 @@ import { Result } from "../classes/Result";
  */
 export class FormManager implements IFormManager {
     private mutationObserver: MutationObserver | null = null;
-
     constructor(
         @inject(TYPES.ObservableFormsCollection)
         private readonly _formsCollection: IObservableCollection<IForm>,
         @inject(TYPES.FormFactory) private readonly _formFactory: IFormFactory,
-        @inject(TYPES.StateManager) private readonly _stateManager:IStateManager,
+        @inject(TYPES.StateManager) private readonly _stateManager: IStateManager,
         @inject(TYPES.EventEmitter)
         private readonly _eventEmitter: IEventEmitter<any>,
         @inject(TYPES.DebuggingLogger)
         private readonly _logger: IDecoratedLogger
-    ) {}
+    ) { }
     /**
      * Initializes form management by creating form instances from existing DOM
      * and setting up a mutation observer for new forms added to the DOM.
      */
     init(): void {
         this.createForms();
+        this._logger.getLogger().info("FormManager: init: Forms created");
     }
     /**
      * Processes mutation records from a `MutationObserver` and adds any detected new form elements to the form manager.
@@ -108,9 +109,14 @@ export class FormManager implements IFormManager {
      */
     addForm(formElement: HTMLFormElement): void {
         try {
-            // Get an array of form elements
+            // Get an array of elements from the form.
             const elements = Array.from(formElement.elements);
             if (elements.length === 0) {
+                return;
+            }
+
+            // If the elements to not have a data-val attribute, return
+            if (!elements.some((element) => element.hasAttribute("data-val"))) {
                 return;
             }
 
@@ -120,12 +126,11 @@ export class FormManager implements IFormManager {
                     this._stateManager.setInitialValue(element.name, element.value);
                 }
             });
-            // If the elements to not have a data-val attribute, return
-            if (!elements.some((element) => element.hasAttribute("data-val"))) {
-                return;
-            }
+
+            // Create a Form Object obeject using the form factory
             const formResults = this._formFactory.create(formElement);
 
+            // If the form object creation fails, log the error and return
             if (!formResults.isSuccess) {
                 const error = Result.handleError(formResults);
                 this._logger
@@ -134,6 +139,7 @@ export class FormManager implements IFormManager {
                 return;
             }
 
+            // Process the form results from the factory
             const formResult = Result.handleSuccess(formResults) as IForm;
             if (formResult === undefined) {
                 this._logger
@@ -142,7 +148,16 @@ export class FormManager implements IFormManager {
                 return;
             }
 
+            // Check to see if the form exists. If it does, remove it. This way we are always working with the latest version of the form. (More applicable to dynamic forms)
+            const existingForm = this._formsCollection.getItems().find(form => form.name === formResult.name);
+            if (existingForm !== undefined) {
+                this._formsCollection.removeItem(existingForm);
+            }
+
+            // Add the form to the collection
             this._formsCollection.addItem(formResult);
+
+            // Emit the formAdded event
             this._eventEmitter.emit("formAdded", formResult);
         } catch (error) {
             const errorMessage =
@@ -174,8 +189,13 @@ export class FormManager implements IFormManager {
                     .error(
                         `FormManager: createForms: Error when adding form: ${errorMessage}`
                     );
-                // Optionally continue to next form or handle the error accordingly
+                continue;
             }
         }
+    }
+
+    getFormByName(formName: string): IForm | undefined {
+        const foundForm = this._formsCollection.getItems().find(form => form.name === formName);
+        return foundForm;
     }
 }

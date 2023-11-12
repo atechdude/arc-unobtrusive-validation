@@ -1,7 +1,4 @@
-
-
-# Build directory
-build/
-node_modules/
-obj/Debug/
+.vscode/
 obj/
+node_modules/
+README.md

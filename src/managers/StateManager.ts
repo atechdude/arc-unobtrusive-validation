@@ -35,9 +35,6 @@ export class StateManager implements IStateManager {
      * @returns {boolean} - True if the control is dirty, otherwise false.
      */
     isControlDirty(controlName: string): boolean {
-        this._logger
-            .getLogger()
-            .info(`Checking if control ${controlName} is dirty`);
         return !!this.dirtyMap[controlName];
     }
     /**

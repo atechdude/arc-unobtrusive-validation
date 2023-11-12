@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+  <metadata>
+    <id>Package</id>
+    <version>1.0.0</version>
+    <authors>HaxxorNulled</authors>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <license type="expression">LGPL-3.0-or-later</license>
+    <!-- <icon>icon.png</icon> -->
+    <projectUrl>https://github.com/atechdude/arc-unobtrusive-validation</projectUrl>
+    <description>Unobtrusive Validation Library for ASP.NET / MVC and Razor Pages</description>
+    <releaseNotes>Initial Release</releaseNotes>
+    <copyright>$copyright$</copyright>
+    <tags>Unobtrusive Validation MVC Razor Pages</tags>
+    <dependencies>
+      <group targetFramework=".NETStandard2.1">
+        <dependency id="none" version="1.0.0" />
+      </group>
+    </dependencies>
+  </metadata>
+</package>

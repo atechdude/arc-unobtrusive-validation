@@ -1,31 +1,39 @@
 import "reflect-metadata";
-import { IDecoratedLogger, IInitializer, IOptions } from "./interfaces";
+import { IDecoratedLogger, IFormManager, IInitializer, IOptions, ISubmitHandler } from "./interfaces";
 import { container } from "./di/container-config";
 import { TYPES } from "./di/container-types";
 
+/**
+ * UnobtrusiveValidation class provides a central point of control for form validation in an application.
+ * It manages form validation settings and handlers, and coordinates with other components.
+ */
 export default class UnobtrusiveValidation {
     private static _currentInstance: UnobtrusiveValidation | null = null;
+    private pendingSubmitHandlers: Record<string, ISubmitHandler> = {};
     private _options: IOptions;
     private _logger: IDecoratedLogger | undefined;
     private _initializer: IInitializer | undefined;
     private _initialized: boolean = false;
-
+    private _formManager: IFormManager | undefined;
     private static defaultOptions: IOptions = {
-        debug: true,
-        logLevel: "info",
+        debug: false,
         autoInit: true,
+        logLevel: "info",
         useDefaultFormSubmitter: true
     };
 
+    /**
+     * Constructs an instance of UnobtrusiveValidation with specified options.
+     * @param {Partial<IOptions>} options - Options for validation configuration.
+     */
     constructor(options: Partial<IOptions>) {
         this._options = { ...UnobtrusiveValidation.defaultOptions, ...options };
-        if (this._options.autoInit !== false) {
-            this.init().catch((err) =>
-                console.error("Initialization failed", err)
-            );
-        }
     }
 
+    /**
+     * Initializes the validation system. Binds options to the container and initializes other components.
+     * @param {boolean} force - Flag to force re-initialization.
+     */
     async init(force = false): Promise<void> {
         if (this._initialized && !force) {
             this._logger
@@ -49,12 +57,18 @@ export default class UnobtrusiveValidation {
         // Get the initializer from the container
         this._initializer = container.get<IInitializer>(TYPES.Initializer);
 
+
         // Initialize the initializer
-        await this._initializer.init();
-        this._initialized = true;
+
+        this._formManager = await this._initializer.init();
     }
 
-    static getInstance(options: Partial<IOptions> = {}): UnobtrusiveValidation {
+    /**
+     * Retrieves the current instance of UnobtrusiveValidation, creating it if it doesn't exist.
+     * @param {Partial<IOptions>} options - Options to configure the instance.
+     * @returns {Promise<UnobtrusiveValidation>} The current instance of UnobtrusiveValidation.
+     */
+    static async getInstance(options: Partial<IOptions> = {}): Promise<UnobtrusiveValidation> {
         const effectiveOptions =
             Object.keys(options).length === 0
                 ? UnobtrusiveValidation.defaultOptions
@@ -63,15 +77,36 @@ export default class UnobtrusiveValidation {
         if (!this._currentInstance) {
             this._currentInstance = new UnobtrusiveValidation(effectiveOptions);
         } else {
-            // Handle case when options are passed after the instance was created.
-            // This can be a full reconfiguration, or you might want to ignore it,
-            // or handle specific properties like autoInit, based on your application's needs.
             this._currentInstance.configure(effectiveOptions);
+        }
+
+        // Perform initialization based on the autoInit option
+        if (effectiveOptions.autoInit && !this._currentInstance._initialized) {
+            await this._currentInstance.init();
         }
 
         return this._currentInstance;
     }
-    configure(options: Partial<IOptions>): void {
+
+    /**
+     * Sets a custom submit handler for a form.
+     * @param {string} formName - The name of the form.
+     * @param {ISubmitHandler} handler - The custom submit handler function.
+     */
+    async setSubmitHandler(formName: string, handler: ISubmitHandler): Promise<void> {
+        if (!this._initializer) {
+            console.error("Initializer is not available");
+            return;
+        }
+
+        await this._initializer.setSubmitHandler(formName, handler);
+    }
+
+    /**
+     * Configures the instance with new options.
+     * @param {Partial<IOptions>} options - New options to apply.
+     */
+    private configure(options: Partial<IOptions>): void {
         // First, check if options actually need updating to prevent unnecessary re-initialization.
         const optionsChanged = Object.keys(options).some(
             (key) => this._options[key] !== options[key]
@@ -88,18 +123,21 @@ export default class UnobtrusiveValidation {
             if (options.autoInit) {
                 // Call the init method to re-initialize.
                 this.init().catch((err) =>
-                    console.error("Re-initialization failed", err)
+                    this._logger?.getLogger().error("Initialization failed", err)
                 );
             } else {
                 // Handle the case where autoInit is false, such as cleaning up resources.
                 this.deinit().catch((err) =>
-                    console.error("De-initialization failed", err)
+                    this._logger?.getLogger().error("De-initialization failed", err)
                 );
             }
         }
 
         // Other options can be handled here as well if they require special logic when changed.
     }
+    /**
+     * De-initializes the UnobtrusiveValidation instance.
+     */
     async deinit(): Promise<void> {
         // De-initialization logic here
         // Nothing to do here for now

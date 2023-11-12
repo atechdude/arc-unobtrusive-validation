@@ -109,22 +109,42 @@ export class UIHandler implements IUIHandler {
      * @returns {HTMLElement | null} - The element that displays the validation message, if found; otherwise, null.
      * @private
      */
-    private getValidationMessageElement(control: HTMLInputElement): HTMLElement | null{
-        // Check if the control is contained within a parent element
-        if (!control.parentElement) {
-            console.error(`Parent element not found for control with name: ${control.name} and id: ${control.id}`);
-            return null; // Exit the function if there is no parent element
+    //private getValidationMessageElement(control: HTMLInputElement): HTMLElement | null{
+    //    // Check if the control is contained within a parent element
+    //    if (!control.parentElement) {
+    //        console.error(`Parent element not found for control with name: ${control.name} and id: ${control.id}`);
+    //        return null; // Exit the function if there is no parent element
+    //    }
+
+    //    // Attempt to find the validation message element
+    //    const msgElement = control.parentElement.querySelector(`[data-valmsg-for="${control.name}"]`);
+
+    //    // Log an error if the validation message element is not found
+    //    if (!msgElement) {
+    //        console.error(`Validation message element not found for control: ${control}  with name: ${control.name} and id: ${control.id}`);
+    //    }
+
+    //    return msgElement as HTMLElement; // Will be null if not found, or the HTMLElement if found
+    //}
+    private getValidationMessageElement(control: HTMLInputElement): HTMLElement | null {
+        // Check if the form element is contained within a form
+        const form = control.form;
+        if (!form) {
+            console.error(`Form not found for control with name: ${control.name} and id: ${control.id}`);
+            return null;
         }
 
-        // Attempt to find the validation message element
-        const msgElement = control.parentElement.querySelector(`[data-valmsg-for="${control.name}"]`);
+        // Attempt to find the validation message element within the entire form
+        const msgElement = form.querySelector(`[data-valmsg-for="${control.name}"]`);
+
 
         // Log an error if the validation message element is not found
         if (!msgElement) {
-            console.error(`Validation message element not found for control: ${control}  with name: ${control.name} and id: ${control.id}`);
+            console.error(`Validation message element not found for control: ${control} with name: ${control.name} and id: ${control.id}`);
         }
 
         return msgElement as HTMLElement; // Will be null if not found, or the HTMLElement if found
     }
+
 
 }

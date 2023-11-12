@@ -25,6 +25,7 @@ export class ValidationControl implements IValidationControl {
     ) {
         this.control = control;
     }
+
     /**
      * Validates the control against a set of rules.
      * @param {IValidationRule[]} rules - An array of validation rules to apply to the control.
@@ -119,7 +120,7 @@ export class ValidationControl implements IValidationControl {
             return this.validateCreditCard(value, rule.message || "The credit card number is not valid.");
         case "remote": {
             const { url, additionalfields } = rule.params;
-            return await this.validateRemote(value, url, additionalfields,rule.message);
+            return await this.validateRemote(value, url, additionalfields, rule.message);
         }
         // Inside the applyRule method
         case "fileextensions": {
@@ -169,7 +170,7 @@ export class ValidationControl implements IValidationControl {
         const isValid = this.isValidCreditCard(value);
         return this.createValidationResult(isValid, isValid ? "" : message);
     }
-    private async validateRemote(value: string, url: string, fields: string,errorMessage:string): Promise<IValidationResult> {
+    private async validateRemote(value: string, url: string, fields: string, errorMessage: string): Promise<IValidationResult> {
         let validationUrl = `${url}?${encodeURIComponent(this.control.name)}=${encodeURIComponent(value)}`;
 
         // Append additional fields to the URL if they exist

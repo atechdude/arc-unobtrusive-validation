@@ -105,10 +105,6 @@ export class ValidationService implements IValidationService {
         form.isValid = isFormValid;
         form.formElement.setAttribute("data-is-valid", String(isFormValid));
 
-        
-        
-
-
         return isFormValid;
     }
 

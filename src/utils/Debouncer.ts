@@ -12,7 +12,7 @@ import { IDebouncer } from "../interfaces";
  */
 @injectable()
 export class Debouncer implements IDebouncer {
-    constructor() {}
+    constructor() { }
     private timeoutId?: ReturnType<typeof setTimeout>;
     /**
      * Debounces the provided function.
@@ -28,15 +28,13 @@ export class Debouncer implements IDebouncer {
         func: T,
         waitMilliseconds: number
     ): void {
-        console.log(`Debounce called. Waiting for ${waitMilliseconds}ms`);
         // Clear the existing timeout, if there is one
         if (this.timeoutId !== undefined) {
             clearTimeout(this.timeoutId);
         }
-
         // Start a new timeout
         this.timeoutId = setTimeout(() => {
-            console.log("Executing debounced function.");
+
             func();
             this.timeoutId = undefined;
         }, waitMilliseconds);
@@ -52,7 +50,6 @@ export class Debouncer implements IDebouncer {
      */
     cancel(): void {
         if (this.timeoutId !== undefined) {
-            console.log("Cancelling debounce.");
             clearTimeout(this.timeoutId);
             this.timeoutId = undefined;
         }

@@ -30,4 +30,5 @@ export * from "./IValidationRule";
 export * from "./IValidationService";
 export * from "./IValidator";
 export * from "./IUIHandler";
+export * from "./ISubmitHandler";
 

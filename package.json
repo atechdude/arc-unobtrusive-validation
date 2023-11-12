@@ -11,7 +11,7 @@
         "build-tsc": "tsc",
         "lint": "eslint \"src/**/*.{js,ts,tsx}\"",
         "build": "webpack --mode production",
-        "watch": "webpack --watch --mode development",
+        "watch": "webpack --watch --mode production",
         "analyze": "webpack --mode production",
         "copy-dist": "xcopy .\\dist\\* \"C:\\Visual Studio Projects\\DfwForSale\\WebUI\\wwwroot\\lib\\arc-unobtrusive-validation\\dist\\\" /E /Y /I"
     },
