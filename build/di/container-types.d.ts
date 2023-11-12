@@ -1,0 +1,20 @@
+declare const TYPES: {
+    Options: symbol;
+    Logger: symbol;
+    EventService: symbol;
+    StateManager: symbol;
+    DebouncerManager: symbol;
+    EventEmitter: symbol;
+    DebuggingLogger: symbol;
+    Initializer: symbol;
+    DebouncerFactory: symbol;
+    FormManager: symbol;
+    FormObserver: symbol;
+    FormFactory: symbol;
+    FormParser: symbol;
+    ObservableFormsCollection: symbol;
+    ValidationService: symbol;
+    ValidationControlFactory: symbol;
+    UIHandler: symbol;
+};
+export { TYPES };
