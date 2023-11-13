@@ -1,7 +1,48 @@
 # ARC Unobtrusive Validation
 
 ## Updates
-Added in support for user defined Form Submit handlers.
+Fixing a few issues with the FormSubmitters. Ideally things will work like this.
+```html
+<script src="~/lib/arc-unobtrusive-validation/dist/arc-unobtrusive-validation.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', async (event) => {
+        const options = { autoInit:true, useDefaultFormSubmitter:false, debug:true }; 
+        
+        // Get the UnobtrusiveValidation class from the window object
+        const UnobtrusiveValidation = window.arcvalidation;
+        
+        // Nothing works without an instance of the UnobtrusiveValidation class.
+        // You will get no form validation!!
+        const validationInstance = await UnobtrusiveValidation.getInstance(options);
+        
+       
+        const createAccountSubmitHandler = (formElement, isValid) => {
+            if (isValid) {
+                // Custom logic for a valid form
+                console.log("Form is valid. Custom submission logic here.");
+            } else {
+                // Custom logic for handling validation errors
+                console.log("Form is not valid. Handle errors here.");
+            }
+        };
+
+        const signInSubmitHandler = (formElement, isValid) => {
+            if (isValid) {
+                // Custom logic for a valid form
+                console.log("Form is valid. Custom submission logic here.");
+            } else {
+                // Custom logic for handling validation errors
+                console.log("Form is not valid. Handle errors here.");
+            }
+        };
+
+        // Add the custom submitHandlers.
+        validationInstance.setSubmitHandler("create-account", createAccountSubmitHandler);
+        validationInstance.setSubmitHandler("sign-in", signInSubmitHandler);
+    })
+</script>
+```
+
 
 ARC Unobtrusive Validation is a TypeScript-based library that integrates with ASP.NET MVC and Razor Pages to provide a streamlined client-side validation experience. It replaces the need for jQuery and jQuery unobtrusive validation scripts, allowing developers to perform validation against Data Annotations directly on the client side without extra dependencies.
 
