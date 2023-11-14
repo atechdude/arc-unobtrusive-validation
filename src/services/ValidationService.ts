@@ -10,9 +10,8 @@ import {
 } from "../interfaces";
 import { Result } from "../classes/Result";
 /**
- * Service responsible for validating form controls.
- * Utilizes form parser for retrieving validation rules and a control factory for creating validation instances.
- * It injects a UI handler for updating the validation messages on the UI.
+ * Service responsible for performing validation on forms and their controls.
+ * It integrates with UI handling and form parsing services to manage the validation process.
  */
 @injectable()
 export class ValidationService implements IValidationService {
@@ -38,44 +37,6 @@ export class ValidationService implements IValidationService {
      * @param {IForm} form - The form to validate.
      * @returns {Promise<boolean>} The overall validity of the form after validation.
      */
-    async validateForm1(form: IForm): Promise<boolean> {
-        let isFormValid = true;
-
-        // Convert the form's elements to an array and filter out non-validatable elements.
-        const controls = Array.from(form.elements).filter(
-            (el) => el instanceof HTMLInputElement ||
-                el instanceof HTMLSelectElement ||
-                el instanceof HTMLTextAreaElement
-        );
-
-        // Validate each control and update the UI.
-        for (const control of controls) {
-            // Skip buttons and hidden inputs. They are not validatable.
-            if (control instanceof HTMLInputElement && (control.type === "button" || control.type === "submit" || control.type === "hidden")) {
-                continue; // Skip this iteration if it's a button or hidden input.
-            }
-            const controlIsValid = await this.validateControl(control as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement);
-            if (!controlIsValid) {
-                isFormValid = false;
-            }
-        }
-        // Set the form's validity to the overall validity of the form.
-        form.formElement.setAttribute("data-is-valid", String(isFormValid));
-
-        form.isValid = isFormValid;
-        // Create an event consumable by JavaScript to indicate the form has been validated.
-        const validationEvent = new CustomEvent("form-validated", {
-            detail: {
-                form,
-                isValid: isFormValid
-            }
-        });
-
-        // Add the event to the form.
-        form.formElement.dispatchEvent(validationEvent);
-
-        return isFormValid;
-    }
     async validateForm(form: IForm): Promise<boolean> {
         // Convert the form's elements to an array and filter out non-validatable elements.
         const controls = Array.from(form.elements).filter(
@@ -107,14 +68,11 @@ export class ValidationService implements IValidationService {
 
         return isFormValid;
     }
-
-
-
     /**
      * Validates a control and updates the UI with validation messages.
      * Skips validation if the control is a button element.
      * @param {HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement} control - The control to validate.
-     * @returns {Promise<void>}
+     * @returns {Promise<boolean>} True if the control is valid, false otherwise.
      */
     async validateControl(
         control: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement

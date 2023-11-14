@@ -1,5 +1,5 @@
 import { Debouncer } from "../utils/Debouncer";
-import { IChange, IDebouncerFactory, IDebouncerManager, IDecoratedLogger, IEventService, IForm, IObservableCollection, IOptions, IStateManager, ISubmitHandler, IValidationService } from "../interfaces";
+import { IChange, IDebouncerFactory, IDebouncerManager, IDecoratedLogger, IEventService, IForm, IObservableCollection, IOptions, IStateManager, IValidationService } from "../interfaces";
 /**
  * Manages event handling and validation for forms.
  * Observes form collection changes and applies necessary event listeners
@@ -20,7 +20,6 @@ export declare class EventService implements IEventService {
     debouncers: {
         [key: string]: Debouncer;
     };
-    private pendingSubmitHandlers;
     /**
      * Initializes a new instance of the EventService.
      * @param {IOptions} _options - The configuration options for the service.
@@ -96,34 +95,6 @@ export declare class EventService implements IEventService {
      * @param validateControl
      */
     debouncedValidate(control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement, debounceTime: number, validateControl: () => Promise<void>): void;
-    /**
-     * Sets a custom submit handler for a specific form identified by its name.
-     * If the form is already present in the collection, the handler is attached immediately.
-     * Otherwise, the handler is queued and will be applied when the form becomes available.
-     * @param {string} formName - The name of the form to set the submit handler for.
-     * @param {ISubmitHandler} handler - The custom submit handler to be applied to the form.
-     */
-    setSubmitHandler(formName: string, handler: ISubmitHandler): void;
-    /**
-     * Queues a submit handler for later application to a form.
-     * This method is used to provisionally store a handler for a form that may not yet be present in the collection.
-     * @param {string} formName - The name of the form for which to queue the submit handler.
-     * @param {ISubmitHandler} handler - The submit handler to be queued for later application.
-     */
-    queueSubmitHandler(formName: string, handler: ISubmitHandler): void;
-    /**
-     * Clears any queued or assigned submit handler for a specific form identified by its name.
-     * This is useful for cleaning up or resetting the form's custom submission logic.
-     * @param {string} formName - The name of the form whose submit handler needs to be cleared.
-     */
-    clearSubmitHandler(formName: string): void;
-    /**
-     * Applies a queued submit handler to a form if one exists.
-     * This is an internal method typically called when a new form is added to ensure any pending handlers are applied.
-     * @param {IForm} form - The form to which a queued submit handler may be applied.
-     * @returns {Promise<void>}
-     */
-    private applyPendingSubmitHandlers;
     /**
      * Removes all event listeners from the specified form element.
      * @param {HTMLFormElement} formElement - The form element from which to remove event listeners.

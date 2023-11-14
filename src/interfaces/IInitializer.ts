@@ -1,7 +1,6 @@
-﻿import { IFormManager } from "./IFormManager";
-import { ISubmitHandler } from "./ISubmitHandler";
+﻿import { ISubmitHandler } from "./ISubmitHandler";
 
 export interface IInitializer {
-    init(): Promise<IFormManager>;
+    init(): Promise<void>;
     setSubmitHandler(formName: string, handler: ISubmitHandler): Promise<void>;
 }

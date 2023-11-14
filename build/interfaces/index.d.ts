@@ -1,3 +1,4 @@
+export * from "./IFormService";
 export * from "./IAppEvents";
 export * from "./IBulkChange";
 export * from "./IChange";
@@ -12,7 +13,6 @@ export * from "./IEventService";
 export * from "./IForm";
 export * from "./IFormFactory";
 export * from "./IFormManager";
-export * from "./IFormObserver";
 export * from "./IFormParser";
 export * from "./IFormResult";
 export * from "./IInitializer";

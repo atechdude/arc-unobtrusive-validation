@@ -60,7 +60,7 @@ export default class UnobtrusiveValidation {
 
         // Initialize the initializer
 
-        this._formManager = await this._initializer.init();
+        await this._initializer.init();
     }
 
     /**
@@ -95,12 +95,14 @@ export default class UnobtrusiveValidation {
      */
     async setSubmitHandler(formName: string, handler: ISubmitHandler): Promise<void> {
         if (!this._initializer) {
-            console.error("Initializer is not available");
+            this._logger?.getLogger().error("Initializer is not available");
             return;
         }
 
         await this._initializer.setSubmitHandler(formName, handler);
+
     }
+
 
     /**
      * Configures the instance with new options.

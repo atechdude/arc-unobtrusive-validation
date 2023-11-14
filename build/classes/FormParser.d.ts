@@ -1,5 +1,9 @@
 import { IFormParser, ILogger, IValidationInformation, IValidationRule } from "../interfaces";
 import { Result } from "./Result";
+/**
+ * FormParser is responsible for parsing HTML forms and extracting validation rules for each input.
+ * It assigns priorities to different validation rule types to determine the order of validation.
+ */
 export declare class FormParser implements IFormParser {
     private readonly _logger;
     /**
@@ -7,6 +11,10 @@ export declare class FormParser implements IFormParser {
      * Higher priority rules will be processed first during validation.
      */
     private rulePriorities;
+    /**
+     * Constructs a FormParser instance with dependency injection for logging.
+     * @param {ILogger} _logger - Logger injected for logging messages and errors.
+     */
     constructor(_logger: ILogger);
     /**
      * Parses the given HTML form element and extracts validation rules for each input.

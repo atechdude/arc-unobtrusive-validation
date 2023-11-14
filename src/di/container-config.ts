@@ -10,8 +10,8 @@ import {
     IForm,
     IFormFactory,
     IFormManager,
-    IFormObserver,
     IFormParser,
+    IFormService,
     IInitializer,
     ILogger,
     IObservableCollection,
@@ -28,7 +28,6 @@ import { DebuggingLogger } from "../logging/DebuggingLogger";
 import { FormManager } from "../managers/FormManager";
 import { Initializer } from "../classes/Initializer";
 import { FormParser } from "../classes/FormParser";
-import { FormObserver } from "../classes/FormObserver";
 import { FormFactory } from "../factory/FormFactory";
 import { ObservableCollection } from "../classes/ObservableCollection";
 import { DebouncerManager } from "../managers/DebounceManager";
@@ -36,16 +35,33 @@ import { DebouncerFactory } from "../factory/DebouncerFactory";
 import { ValidationService } from "../services/ValidationService";
 import { ValidationControlFactory } from "../factory/ValidationControlFactory";
 import { UIHandler } from "../classes/UIHandler";
+import { IUtil } from "../interfaces/IUtil";
+import { Util } from "../utils/util";
+import { Form } from "../classes/Form";
+import { FormService } from "../services/FormService";
 
 const container = new Container();
 
-container.bind<ILogger>(TYPES.Logger).to(Logger).inSingletonScope();
+container
+    .bind<IUtil>(TYPES.Utils)
+    .to(Util)
+    .inRequestScope();
+container
+    .bind<ILogger>(TYPES.Logger)
+    .to(Logger)
+    .inSingletonScope();
 container
     .bind<IEventEmitter<IAppEvents>>(TYPES.EventEmitter)
     .to(EventEmitter<IAppEvents>)
     .inRequestScope();
-container.bind<IEventService>(TYPES.EventService).to(EventService)
-    .inSingletonScope;
+container
+    .bind<IFormService>(TYPES.FormService)
+    .to(FormService)
+    .inSingletonScope();
+container
+    .bind<IEventService>(TYPES.EventService)
+    .to(EventService)
+    .inSingletonScope();
 container
     .bind<IStateManager>(TYPES.StateManager)
     .to(StateManager)
@@ -59,14 +75,17 @@ container
     .to(Initializer)
     .inSingletonScope();
 container
+    .bind<IForm>(TYPES.Form)
+    .to(Form)
+    .inSingletonScope();
+container
     .bind<IFormManager>(TYPES.FormManager)
     .to(FormManager)
     .inSingletonScope();
-container.bind<IFormParser>(TYPES.FormParser).to(FormParser).inSingletonScope();
 container
-    .bind<IFormObserver>(TYPES.FormObserver)
-    .to(FormObserver)
-    .inSingletonScope();
+    .bind<IFormParser>(TYPES.FormParser)
+    .to(FormParser)
+    .inRequestScope();
 container
     .bind<IFormFactory>(TYPES.FormFactory)
     .to(FormFactory)
@@ -94,6 +113,6 @@ container
 container
     .bind<IUIHandler>(TYPES.UIHandler)
     .to(UIHandler)
-    .inSingletonScope();
+    .inRequestScope();
 
 export { container };

@@ -8,16 +8,11 @@ import {
 } from "../interfaces";
 import { Result } from "./Result";
 
-@injectable()
 /**
- * Parses HTML forms to extract validation rules from data attributes.
- * @class
- *
- * The FormParser is responsible for traversing a form's inputs and parsing out
- * the validation rules defined via data attributes. It constructs a structured
- * representation of these rules, including their types, messages, parameters,
- * and priorities, which can then be used to perform client-side validation.
+ * FormParser is responsible for parsing HTML forms and extracting validation rules for each input.
+ * It assigns priorities to different validation rule types to determine the order of validation.
  */
+@injectable()
 export class FormParser implements IFormParser {
     /**
      * A map of validation rule types to their associated priority levels.
@@ -34,10 +29,15 @@ export class FormParser implements IFormParser {
         ["creditcard", 9],
         ["email", 10],
         ["phone", 10],
-        ["url", 10]
+        ["url", 10],
+        ["radio",10]
         // ... other rules with their respective priorities
     ]);
 
+    /**
+     * Constructs a FormParser instance with dependency injection for logging.
+     * @param {ILogger} _logger - Logger injected for logging messages and errors.
+     */
     constructor(@inject(TYPES.Logger) private readonly _logger: ILogger) { }
 
     /**
@@ -97,6 +97,7 @@ export class FormParser implements IFormParser {
             // Using a traditional for loop instead of Array.from().forEach()
             for (let i = 0; i < input.attributes.length; i++) {
                 const attr = input.attributes[i];
+
                 if (attr.name.startsWith("data-val")) {
                     const match = /data-val-([^\-]+)-?([^\-]+)?/.exec(
                         attr.name

@@ -11,7 +11,6 @@ import {
     IObservableCollection,
     IOptions,
     IStateManager,
-    ISubmitHandler,
     IValidationService
 } from "../interfaces";
 /**
@@ -25,7 +24,6 @@ export class EventService implements IEventService {
         new WeakMap();
     dirtyMap: { [key: string]: boolean } = {};
     debouncers: { [key: string]: Debouncer } = {};
-    private pendingSubmitHandlers: Record<string, ISubmitHandler> = {};
 
     /**
      * Initializes a new instance of the EventService.
@@ -52,7 +50,6 @@ export class EventService implements IEventService {
         @inject(TYPES.DebuggingLogger)
         private readonly _logger: IDecoratedLogger
     ) {
-
         this._observableFormsCollection.addObserver(this);
     }
     /**
@@ -65,6 +62,7 @@ export class EventService implements IEventService {
         if (changeType !== "add" || !form.formElement) {
             return;
         }
+
         // Cleanup any previous resources for the form.
         // This might be required to handle re-adding a form that was removed without proper cleanup.
         await this.cleanupResourcesForForm(form.formElement);
@@ -85,9 +83,6 @@ export class EventService implements IEventService {
      */
     async setupHandlers(form: IForm): Promise<void> {
         this._logger.getLogger().info("Setting up handlers for form: " + form.name);
-
-        // Apply any pending submit handlers
-        await this.applyPendingSubmitHandlers(form);
 
         // Loop over each control in the form
         const controls = Array.from(form.elements);
@@ -158,7 +153,7 @@ export class EventService implements IEventService {
      */
     createSubmitHandler(form: IForm): EventListener {
         this._logger.getLogger().info("Creating Submit Handler");
-        this._logger.getLogger().info(this.pendingSubmitHandlers);
+
 
         return async (event: Event) => {
             event.preventDefault();
@@ -304,54 +299,6 @@ export class EventService implements IEventService {
                     );
                 }
             }, debounceTime);
-    }
-
-    /**
-     * Sets a custom submit handler for a specific form identified by its name.
-     * If the form is already present in the collection, the handler is attached immediately.
-     * Otherwise, the handler is queued and will be applied when the form becomes available.
-     * @param {string} formName - The name of the form to set the submit handler for.
-     * @param {ISubmitHandler} handler - The custom submit handler to be applied to the form.
-     */
-    setSubmitHandler(formName: string, handler: ISubmitHandler): void {
-        const form = this._observableFormsCollection.getItems().find(f => f.name === formName);
-        if (form) {
-            form.submitHandler = handler;
-        } else {
-            this.pendingSubmitHandlers[formName] = handler;
-        }
-    }
-
-    /**
-     * Queues a submit handler for later application to a form.
-     * This method is used to provisionally store a handler for a form that may not yet be present in the collection.
-     * @param {string} formName - The name of the form for which to queue the submit handler.
-     * @param {ISubmitHandler} handler - The submit handler to be queued for later application.
-     */
-    queueSubmitHandler(formName: string, handler: ISubmitHandler): void {
-        this.pendingSubmitHandlers[formName] = handler;
-    }
-
-    /**
-     * Clears any queued or assigned submit handler for a specific form identified by its name.
-     * This is useful for cleaning up or resetting the form's custom submission logic.
-     * @param {string} formName - The name of the form whose submit handler needs to be cleared.
-     */
-    clearSubmitHandler(formName: string): void {
-        delete this.pendingSubmitHandlers[formName];
-    }
-
-    /**
-     * Applies a queued submit handler to a form if one exists.
-     * This is an internal method typically called when a new form is added to ensure any pending handlers are applied.
-     * @param {IForm} form - The form to which a queued submit handler may be applied.
-     * @returns {Promise<void>}
-     */
-    private async applyPendingSubmitHandlers(form: IForm): Promise<void> {
-        const handler = this.pendingSubmitHandlers[form.name];
-        if (handler) {
-            form.submitHandler = handler;
-        }
     }
 
     /**

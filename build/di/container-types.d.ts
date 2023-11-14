@@ -1,5 +1,7 @@
 declare const TYPES: {
     Options: symbol;
+    Utils: symbol;
+    FormService: symbol;
     Logger: symbol;
     EventService: symbol;
     StateManager: symbol;
@@ -8,8 +10,8 @@ declare const TYPES: {
     DebuggingLogger: symbol;
     Initializer: symbol;
     DebouncerFactory: symbol;
+    Form: symbol;
     FormManager: symbol;
-    FormObserver: symbol;
     FormFactory: symbol;
     FormParser: symbol;
     ObservableFormsCollection: symbol;

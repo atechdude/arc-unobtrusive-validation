@@ -1,8 +1,7 @@
 import { IDecoratedLogger, IForm, IFormParser, IUIHandler, IValidationControlFactory, IValidationService } from "../interfaces";
 /**
- * Service responsible for validating form controls.
- * Utilizes form parser for retrieving validation rules and a control factory for creating validation instances.
- * It injects a UI handler for updating the validation messages on the UI.
+ * Service responsible for performing validation on forms and their controls.
+ * It integrates with UI handling and form parsing services to manage the validation process.
  */
 export declare class ValidationService implements IValidationService {
     private readonly _logger;
@@ -24,13 +23,12 @@ export declare class ValidationService implements IValidationService {
      * @param {IForm} form - The form to validate.
      * @returns {Promise<boolean>} The overall validity of the form after validation.
      */
-    validateForm1(form: IForm): Promise<boolean>;
     validateForm(form: IForm): Promise<boolean>;
     /**
      * Validates a control and updates the UI with validation messages.
      * Skips validation if the control is a button element.
      * @param {HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement} control - The control to validate.
-     * @returns {Promise<void>}
+     * @returns {Promise<boolean>} True if the control is valid, false otherwise.
      */
     validateControl(control: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement): Promise<boolean>;
 }

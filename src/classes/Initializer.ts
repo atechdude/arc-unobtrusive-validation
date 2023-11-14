@@ -1,43 +1,19 @@
 ﻿import { inject, injectable } from "inversify";
-
-import {
-    IAppEvents,
-    IEventEmitter,
-    IEventService,
-    IFormManager,
-    IFormObserver,
-    IInitializer,
-    IOptions,
-    IStateManager,
-    ISubmitHandler
-} from "../interfaces";
 import { TYPES } from "../di/container-types";
+import { IDecoratedLogger, IEventService, IFormManager, IFormService, IInitializer, IOptions, ISubmitHandler } from "../interfaces";
+
 /**
  * Initializer class responsible for setting up the form validation system.
  * It initializes form management, starts observing for form changes, and sets up submit handlers.
  */
 @injectable()
 export class Initializer implements IInitializer {
-    /**
-     * Creates an instance of Initializer.
-     * @param {IOptions} _options - Configuration options.
-     * @param {IFormManager} _formManager - The form manager to handle form-related operations.
-     * @param {IFormObserver} _formObserver - Observer for monitoring form changes.
-     * @param {IEventService} _eventService - Service for managing events related to forms.
-     * @param {IStateManager} _stateManager - State manager for form states.
-     * @param {IEventEmitter<IAppEvents>} _eventEmitter - Event emitter for application-level events.
-     */
     constructor(
         @inject(TYPES.Options) private readonly _options: IOptions,
         @inject(TYPES.FormManager) private readonly _formManager: IFormManager,
-        @inject(TYPES.FormObserver)
-        private readonly _formObserver: IFormObserver,
-        @inject(TYPES.EventService)
-        private readonly _eventService: IEventService,
-        @inject(TYPES.StateManager)
-        private readonly _stateManager: IStateManager,
-        @inject(TYPES.EventEmitter)
-        private readonly _eventEmitter: IEventEmitter<IAppEvents>
+        @inject(TYPES.FormService) private readonly _formService: IFormService,
+        @inject(TYPES.EventService) private readonly _eventService: IEventService,
+        @inject(TYPES.DebuggingLogger) private readonly _logger: IDecoratedLogger
     ) { }
 
     /**
@@ -45,7 +21,7 @@ export class Initializer implements IInitializer {
      * Emits an "Initialized" event upon completion.
      * @returns {Promise<IFormManager>} The initialized FormManager instance.
      */
-    async init(): Promise<IFormManager> {
+    async init(): Promise<void> {
         // If the DOM is already loaded
         if (document.readyState === "loading") {
             // The document is still loading, add an event listener
@@ -56,12 +32,6 @@ export class Initializer implements IInitializer {
             // The DOM is already loaded
             await this.onDOMLoaded();
         }
-
-        this._eventEmitter.emit("Initialized", {
-            source: "Initializer",
-            message: "System Intialized"
-        });
-        return this._formManager; // Return the FormManager instance
     }
 
     /**
@@ -69,30 +39,41 @@ export class Initializer implements IInitializer {
      * This includes starting form observation and initiating the form manager.
      */
     private async onDOMLoaded(): Promise<void> {
-        this._formObserver.startObserving();
-        this._formManager.init();
+        await this._formManager.init();
     }
 
     /**
-     * Sets a custom submit handler for a specific form.
-     * If the form is already managed, the handler is set immediately.
-     * Otherwise, the handler is queued for later assignment.
-     * @param {string} formName - The name of the form to set the submit handler for.
-     * @param {ISubmitHandler} handler - The submit handler function to be set.
-     * @returns {Promise<void>}
+     * Asynchronously assigns a custom submit handler to a form identified by its unique name.
+     * This method ensures that the specified submit handler is associated with the named form,
+     * whether the form currently exists in the DOM or is added later.
+     *
+     * - If the form is already loaded and recognized by the FormService, the submit handler is
+     * attached immediately to provide custom submit logic for that form.
+     * - If the form is not yet loaded or recognized, the handler is stored and will be applied
+     * automatically once the form becomes available, ensuring seamless integration with dynamically
+     * loaded forms.
+     *
+     * This method is particularly useful for setting up custom submission behaviors for forms,
+     * allowing for asynchronous validation, data processing, or any other custom logic that needs
+     * to be executed upon form submission.
+     * @param {string} formName - The name of the form to which the submit handler will be applied.
+     *                            This name should match the 'name' attribute of the form element.
+     * @param {ISubmitHandler} handler - A callback function that defines the custom submit logic.
+     *                                   The handler function receives the form element and a boolean
+     *                                   indicating the validation status as arguments.
+     * @returns {Promise<void>} - A promise that resolves when the handler is successfully set, or
+     *                            rejects with an error if unable to set the handler.
+     * @throws {Error} - Throws an error if an exception occurs during the execution of the method.
      */
     async setSubmitHandler(formName: string, handler: ISubmitHandler): Promise<void> {
-        if (!this._formManager) {
-            console.error("FormManager is not initialized");
+        try {
+            this._formService.setSubmitHandler(formName, handler);
             return;
-        }
 
-        const form = this._formManager.getFormByName(formName);
-        if (form) {
-            form.submitHandler = handler;
-        } else {
-            // Queue the handler for later assignment using EventService
-            this._eventService.queueSubmitHandler(formName, handler);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this._logger?.getLogger().error(`Error in setSubmitHandler: ${errorMessage}`);
+            throw error; // Rethrowing for potential higher-level handling
         }
     }
 }
