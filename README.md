@@ -3,19 +3,21 @@
 ## Updates
 Fixing a few issues with the FormSubmitters. Ideally things will work like this.
 ```html
-<script src="~/lib/arc-unobtrusive-validation/dist/arc-unobtrusive-validation.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', async (event) => {
-        const options = { autoInit:true, useDefaultFormSubmitter:false, debug:true }; 
-        
+    // The validation does not have to go in the DOMContentLoaded. Any async event or method will work..
+    // The Validation Library Checks internally for state of the DOM.
+	document.addEventListener('DOMContentLoaded', async (event) => {
+        // Event for when a new Form is added to the FormManager:
+        document.addEventListener("formAdded", function (e) {
+            console.log("New form added:", e.detail);
+        });
+        const options = { autoInit:true,useDefaultFormSubmitter:false,debug:false }; 
+		
         // Get the UnobtrusiveValidation class from the window object
         const UnobtrusiveValidation = window.arcvalidation;
-        
+		
         // Nothing works without an instance of the UnobtrusiveValidation class.
         // You will get no form validation!!
-        const validationInstance = await UnobtrusiveValidation.getInstance(options);
-        
-       
         const createAccountSubmitHandler = (formElement, isValid) => {
             if (isValid) {
                 // Custom logic for a valid form
@@ -35,10 +37,13 @@ Fixing a few issues with the FormSubmitters. Ideally things will work like this.
                 console.log("Form is not valid. Handle errors here.");
             }
         };
-
-        // Add the custom submitHandlers.
-        validationInstance.setSubmitHandler("create-account", createAccountSubmitHandler);
-        validationInstance.setSubmitHandler("sign-in", signInSubmitHandler);
+        
+        // Create an instance, This will load all forms with data-val=true attributes.
+        const validationInstance = await UnobtrusiveValidation.getInstance(options);
+        
+        // Add the custom submitHandlers. For forms that are not in the DOM yet we track the submitHandlers and apply then when the form decides to show up :)
+        await validationInstance.setSubmitHandler("create-account", createAccountSubmitHandler);
+        await validationInstance.setSubmitHandler("sign-in", signInSubmitHandler);
     })
 </script>
 ```
